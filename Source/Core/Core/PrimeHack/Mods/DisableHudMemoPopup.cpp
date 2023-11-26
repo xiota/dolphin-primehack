@@ -1,48 +1,52 @@
 #include "Core/PrimeHack/Mods/DisableHudMemoPopup.h"
 
+#include "Core/Core.h"
+#include "Core/PowerPC/PowerPC.h"
+#include "Core/PowerPC/MMU.h"
 #include "Core/PrimeHack/PrimeUtils.h"
+#include "Core/System.h"
 
 namespace prime {
 namespace {
-void hudmemo_overlay_adjust_mp1(u32 job) {
+void hudmemo_overlay_adjust_mp1(PowerPC::PowerPCState& ppc_state, PowerPC::MMU& mmu, u32 job) {
   if (job == 0) {  // Fix time
-    const u32 time_addr = GPR(28) + 0x30;
-    writef32(std::max(readf32(time_addr), 3.f), time_addr);
+    const u32 time_addr = ppc_state.gpr[28] + 0x30;
+    mmu.Write_F32(std::max(mmu.Read_F32(time_addr), 3.f), time_addr);
 
     // Original instruction: li r4, 0
-    GPR(4) = 0;
+    ppc_state.gpr[4] = 0;
   } else if (job == 1) {  // Fix justification of hud text overlay
-    const u32 justification_addr = GPR(3) + 0xd4 + 0x18;
+    const u32 justification_addr = ppc_state.gpr[3] + 0xd4 + 0x18;
     // 1 = Center justify
-    write32(1, justification_addr);
+    mmu.Write_U32(1, justification_addr);
 
     // Original instruction: addi r3, r3, 0xd4
-    GPR(3) += 0xd4;
+    ppc_state.gpr[3] += 0xd4;
   } else {}
 }
 
-void hudmemo_overlay_adjust_mp1_gc(u32 job) {
+void hudmemo_overlay_adjust_mp1_gc(PowerPC::PowerPCState& ppc_state, PowerPC::MMU& mmu, u32 job) {
   if (job == 0) {  // Fix time
-    const u32 time_addr = GPR(28) + 0x34;
-    writef32(std::max(readf32(time_addr), 3.f), time_addr);
+    const u32 time_addr = ppc_state.gpr[28] + 0x34;
+    mmu.Write_F32(std::max(mmu.Read_F32(time_addr), 3.f), time_addr);
 
     // Original instruction: li r4, 0
-    GPR(4) = 0;
+    ppc_state.gpr[4] = 0;
   } else if (job == 1) {  // Fix justification of hud text overlay
-    const u32 justification_addr = GPR(3) + 0xd4 + 0x18;
+    const u32 justification_addr = ppc_state.gpr[3] + 0xd4 + 0x18;
     // 1 = Center justify
-    write32(1, justification_addr);
+    mmu.Write_U32(1, justification_addr);
 
     // Original instruction: addi r3, r3, 0xd4
-    GPR(3) += 0xd4;
+    ppc_state.gpr[3] += 0xd4;
   } else {}
 }
 
 float restart_audio_timer = 0.f;
 bool restart_audio_signal = false;
-void restart_streamed_audio_mp3(u32 param) {
+void restart_streamed_audio_mp3(PowerPC::PowerPCState& ppc_state, PowerPC::MMU&, u32 param) {
   // check if the hudmemo was going to be a popup
-  if (GPR(0) == 1) {
+  if (ppc_state.gpr[0] == 1) {
     restart_audio_timer = 3.f;
     restart_audio_signal = true;
   }
@@ -69,7 +73,7 @@ void DisableHudMemoPopup::run_mod(Game game, Region region) {
 }
 
 void DisableHudMemoPopup::init_mod_mp1(Region region) {
-  const int hudmemo_fix_fn = PowerPC::RegisterVmcall(hudmemo_overlay_adjust_mp1);
+  const int hudmemo_fix_fn = Core::System::GetInstance().GetPowerPC().RegisterVmcall(hudmemo_overlay_adjust_mp1);
   if (hudmemo_fix_fn == -1) {
     // HOW??? I SURE DO I USE THIS COOL FEATURE ENOUGH TO BE A PROBLEM :)
     return;
@@ -93,7 +97,7 @@ void DisableHudMemoPopup::init_mod_mp1(Region region) {
 }
 
 void DisableHudMemoPopup::init_mod_mp1gc(Region region) {
-  const int hudmemo_fix_fn = PowerPC::RegisterVmcall(hudmemo_overlay_adjust_mp1_gc);
+  const int hudmemo_fix_fn = Core::System::GetInstance().GetPowerPC().RegisterVmcall(hudmemo_overlay_adjust_mp1_gc);
   if (hudmemo_fix_fn == -1) {
     return;
   }
@@ -112,7 +116,7 @@ void DisableHudMemoPopup::init_mod_mp1gc(Region region) {
 
 void DisableHudMemoPopup::init_mod_mp1gc_r1() {
   // Revision 1 matches revision 0 in behavior
-  const int hudmemo_fix_fn = PowerPC::RegisterVmcall(hudmemo_overlay_adjust_mp1_gc);
+  const int hudmemo_fix_fn = Core::System::GetInstance().GetPowerPC().RegisterVmcall(hudmemo_overlay_adjust_mp1_gc);
   if (hudmemo_fix_fn == -1) {
     return;
   }
@@ -124,7 +128,7 @@ void DisableHudMemoPopup::init_mod_mp1gc_r1() {
 }
 
 void DisableHudMemoPopup::init_mod_mp1gc_r2() {
-  const int hudmemo_fix_fn = PowerPC::RegisterVmcall(hudmemo_overlay_adjust_mp1_gc);
+  const int hudmemo_fix_fn = Core::System::GetInstance().GetPowerPC().RegisterVmcall(hudmemo_overlay_adjust_mp1_gc);
   if (hudmemo_fix_fn == -1) {
     return;
   }
@@ -136,7 +140,7 @@ void DisableHudMemoPopup::init_mod_mp1gc_r2() {
 }
 
 void DisableHudMemoPopup::init_mod_mp3(Game game, Region region) {
-  const int audio_restart_fn = PowerPC::RegisterVmcall(restart_streamed_audio_mp3);
+  const int audio_restart_fn = Core::System::GetInstance().GetPowerPC().RegisterVmcall(restart_streamed_audio_mp3);
   const u32 vmc_restart_audio = gen_vmcall(static_cast<u32>(audio_restart_fn), 0);
   if (game == Game::PRIME_3) {
     if (region == Region::NTSC_U) {

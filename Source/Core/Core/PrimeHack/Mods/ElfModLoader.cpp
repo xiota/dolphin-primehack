@@ -3,12 +3,14 @@
 #include "Common/SymbolDB.h"
 #include "Core/Boot/ElfReader.h"
 #include "Core/PowerPC/PPCSymbolDB.h"
-#include "Core/PrimeHack/PrimeUtils.h"
 #include "Core/PowerPC/MMU.h"
+#include "Core/PrimeHack/PrimeUtils.h"
+#include "Core/System.h"
 
 #include <filesystem>
 #include <fstream>
 #include <regex>
+#include <variant>
 #include <vector>
 
 namespace prime {
@@ -32,54 +34,6 @@ size_t get_type_size(CVarType t) {
     return 0;
   }
 }
-void write_type(u64 val, u32 addr, CVarType type) {
-  switch (type) {
-  case CVarType::INT8:
-    write8(static_cast<u8>(val), addr);
-    break;
-  case CVarType::INT16:
-    write16(static_cast<u16>(val), addr);
-    break;
-  case CVarType::INT32:
-    write32(static_cast<u32>(val), addr);
-    break;
-  case CVarType::INT64:
-    write64(val, addr);
-    break;
-  case CVarType::FLOAT32:
-    write32(static_cast<u32>(val), addr);
-    break;
-  case CVarType::FLOAT64:
-    write64(val, addr);
-    break;
-  case CVarType::BOOLEAN:
-    write8(static_cast<bool>(val), addr);
-    break;
-  default:
-    break;
-  }
-}
-u64 read_type(u32 addr, CVarType type) {
-  switch (type) {
-  case CVarType::INT8:
-    return static_cast<u64>(read8(addr));
-  case CVarType::INT16:
-    return static_cast<u64>(read16(addr));
-  case CVarType::INT32:
-    return static_cast<u64>(read32(addr));
-  case CVarType::INT64:
-    return read64(addr);
-  case CVarType::FLOAT32:
-    return static_cast<u64>(read32(addr));
-  case CVarType::FLOAT64:
-    return read64(addr);
-  case CVarType::BOOLEAN:
-    return static_cast<u64>(read8(addr));
-  default:
-    return 0;
-  }
-}
-
 
 // Might be overkill, hopefully more useful as more tags are added
 template <typename... Args> struct all_same : std::false_type {};
@@ -109,6 +63,24 @@ auto resolve_symbols(T&& cb, std::string const& name, Args const&... tnames)
 }
 }
 
+void ElfModLoader::write_cvar_val(CVarVal var, u32 addr) {
+  if (uint8_t const* v8 = std::get_if<uint8_t>(&var); v8 != nullptr) {
+    write8(*v8, addr);
+  } else if (uint16_t const* v16 = std::get_if<uint16_t>(&var); v16 != nullptr) {
+    write16(*v16, addr);
+  } else if (uint32_t const* v32 = std::get_if<uint32_t>(&var); v32 != nullptr) {
+    write32(*v32, addr);
+  } else if (uint64_t const* v64 = std::get_if<uint64_t>(&var); v64 != nullptr) {
+    write64(*v64, addr);
+  } else if (float const* f32 = std::get_if<float>(&var); f32 != nullptr) {
+    writef32(*f32, addr);
+  } else if (double const* f64 = std::get_if<double>(&var); f64 != nullptr) {
+    writef64(*f64, addr);
+  } else if (bool const* b = std::get_if<bool>(&var); b != nullptr) {
+    write8(*b, addr);
+  }
+}
+
 void ElfModLoader::run_mod(Game game, Region region) {
   const auto load_mod = [this] {
     std::string pending_elf = GetPendingModfile();
@@ -125,7 +97,7 @@ void ElfModLoader::run_mod(Game game, Region region) {
   case Game::PRIME_1_GCN:
   case Game::PRIME_2_GCN:
     update_bat_regs();
-    
+
     if (region != Region::NTSC_U) {
       return;
     }
@@ -169,8 +141,14 @@ void ElfModLoader::run_mod(Game game, Region region) {
     break;
   }
   if (debug_output_addr != 0) {
-    std::string debug_str = PowerPC::HostGetString(debug_output_addr);
+    std::string debug_str = PowerPC::MMU::HostGetString(*active_guard, debug_output_addr);
     DevInfo("Mod Output", "%s", debug_str.c_str());
+  }
+
+  if (load_state == LoadState::ACTIVE) {
+    for (auto& entry : cvar_map) {
+      write_cvar_val(entry.second.value, entry.second.addr);
+    }
   }
 }
 
@@ -179,17 +157,20 @@ bool ElfModLoader::init_mod(Game game, Region region) {
     update_bat_regs();
   }
 
-  return true; 
+  return true;
 }
 
 void ElfModLoader::update_bat_regs() {
-  bool should_update = !(PowerPC::ppcState.spr[SPR_DBAT2U] & 0x00000100 || PowerPC::ppcState.spr[SPR_IBAT2U] & 0x00000100);
+  Core::System& system = Core::System::GetInstance();
+  auto& ppc_state = system.GetPPCState();
+  auto& mmu = system.GetMMU();
+  bool should_update = !(ppc_state.spr[SPR_DBAT2U] & 0x00000100 || ppc_state.spr[SPR_IBAT2U] & 0x00000100);
   if (should_update) {
-    PowerPC::ppcState.spr[SPR_DBAT2U] |= 0x00000100;
-    PowerPC::ppcState.spr[SPR_IBAT2U] |= 0x00000100;
+    ppc_state.spr[SPR_DBAT2U] |= 0x00000100;
+    ppc_state.spr[SPR_IBAT2U] |= 0x00000100;
 
-    PowerPC::DBATUpdated();
-    PowerPC::IBATUpdated();
+    mmu.DBATUpdated();
+    mmu.IBATUpdated();
   }
 }
 
@@ -199,40 +180,36 @@ void ElfModLoader::get_cvarlist(std::vector<CVar>& vars_out) {
   }
 }
 
-bool ElfModLoader::write_cvar(std::string const& name, void* data) {
+bool ElfModLoader::write_cvar_request(std::string const& name, CVarVal data) {
   auto result = cvar_map.find(name);
   if (result == cvar_map.end()) {
     return false;
   }
-  u64 write_data = 0;
-  memcpy(&write_data, data, get_type_size(result->second.type));
-  write_type(write_data, result->second.addr, result->second.type);
+  if (data.index() != static_cast<size_t>(result->second.type)) {
+    return false;
+  }
+  result->second.value = data;
   return true;
 }
 
-bool ElfModLoader::get_cvar_val(std::string const& name, void* data_out, size_t out_sz) {
+bool ElfModLoader::get_cvar_val(std::string const& name, CVarVal& data_out) {
   auto result = cvar_map.find(name);
   if (result == cvar_map.end()) {
     return false;
   }
-  u64 data = read_type(result->second.addr, result->second.type);
-  memcpy(data_out, &data, std::min(get_type_size(result->second.type), out_sz));
+  data_out = result->second.value;
   return true;
-}
-
-CVar* ElfModLoader::get_cvar(std::string const& name) {
-  auto result = cvar_map.find(name);
-  if (result == cvar_map.end()) {
-    return nullptr;
-  }
-  return &result->second;
 }
 
 void ElfModLoader::load_presets(std::string const& path) {
+  Core::CPUThreadGuard guard(Core::System::GetInstance());
+  active_guard = &guard;
+
   std::ifstream preset_file(path);
 
   if (!preset_file.is_open()) {
     // TODO: log error to user (log & OSD)
+    active_guard = nullptr;
     return;
   }
 
@@ -254,48 +231,35 @@ void ElfModLoader::load_presets(std::string const& path) {
         continue;
       }
 
-      const u32 var_addr = var_it->second.addr;
       switch (var_it->second.type) {
       case CVarType::BOOLEAN:
         if (var_val == "true") {
-          write8(true, var_addr);
+          var_it->second.value = true;
         } else if (var_val == "false") {
-          write8(false, var_addr);
+          var_it->second.value = false;
         }
         break;
-      case CVarType::INT8: {
-          u8 val = static_cast<u8>(strtoul(var_val.c_str(), nullptr, 10));
-          write8(val, var_addr);
-        }
+      case CVarType::INT8:
+        var_it->second.value = static_cast<u8>(strtoul(var_val.c_str(), nullptr, 10));
         break;
-      case CVarType::INT16: {
-          u16 val = static_cast<u16>(strtoul(var_val.c_str(), nullptr, 10));
-          write16(val, var_addr);
-        }
+      case CVarType::INT16:
+        var_it->second.value = static_cast<u16>(strtoul(var_val.c_str(), nullptr, 10));
+      case CVarType::INT32:
+        var_it->second.value = strtoul(var_val.c_str(), nullptr, 10);
         break;
-      case CVarType::INT32: {
-          u32 val = strtoul(var_val.c_str(), nullptr, 10);
-          write32(val, var_addr);
-        }
+      case CVarType::INT64:
+        var_it->second.value = strtoull(var_val.c_str(), nullptr, 10);
         break;
-      case CVarType::INT64: {
-          u64 val = strtoull(var_val.c_str(), nullptr, 10);
-          write64(val, var_addr);
-        }
+      case CVarType::FLOAT32:
+        var_it->second.value = strtof(var_val.c_str(), nullptr);
         break;
-      case CVarType::FLOAT32: {
-          float val = strtof(var_val.c_str(), nullptr);
-          writef32(val, var_addr);
-        }
-        break;
-      case CVarType::FLOAT64: {
-          double val = strtod(var_val.c_str(), nullptr);
-          write64(val, *reinterpret_cast<u64*>(&val));
-        }
+      case CVarType::FLOAT64:
+        var_it->second.value = strtod(var_val.c_str(), nullptr);
         break;
       }
     }
   }
+  active_guard = nullptr;
 }
 
 std::optional<CodeChange> ElfModLoader::parse_code(std::string const& str) {
@@ -329,7 +293,7 @@ std::optional<CVar> ElfModLoader::parse_cvar(std::string const& str) {
     else if (type == "f32") { parsed_type = CVarType::FLOAT32; }
     else if (type == "f64") { parsed_type = CVarType::FLOAT64; }
     else { parsed_type = CVarType::BOOLEAN; } // type == "bool"
-    
+
     return std::make_optional<CVar>(matches[1], 0, parsed_type);
   }
   return std::nullopt;
@@ -378,12 +342,12 @@ auto ElfModLoader::parse_cleanup(std::string const& str) -> std::optional<cleanu
 
 std::optional<std::string> ElfModLoader::parse_elfpath(std::string const& rel_file, std::string const& str) {
   std::filesystem::path search_name(str);
-  
+
   if (search_name.is_absolute() && std::filesystem::exists(str)) {
     return std::make_optional<std::string>(str);
   }
   search_name = (std::filesystem::absolute(rel_file).parent_path()) / str;
-  
+
   if (std::filesystem::exists(search_name)) {
     auto tmp = search_name.native();
     return std::make_optional<std::string>(tmp.begin(), tmp.end());
@@ -541,11 +505,11 @@ void ElfModLoader::parse_and_load_modfile(std::string const& path) {
 
 bool ElfModLoader::load_elf(std::string const& path) {
   ElfReader elf_file(path);
-  
+
   if (elf_file.IsValid()) {
-    elf_file.LoadIntoMemory(false);
+    elf_file.LoadIntoMemory(Core::System::GetInstance(), false);
     g_symbolDB.Clear();
-    elf_file.LoadSymbols();
+    elf_file.LoadSymbols(*active_guard);
   }
   return elf_file.IsValid();
 }
@@ -572,7 +536,7 @@ u32 ElfModLoader::add_callgate_entry(u32 hook_target, u32 original_target) {
 
 u32 ElfModLoader::add_trampoline_restore_entry(u32 func_start) {
   const u32 trampoline_restore_loc = 8 * callgate.trampoline_count + callgate.trampoline_restore_table;
-  const u32 original_instruction = PowerPC::HostRead_Instruction(func_start);
+  const u32 original_instruction = readi(func_start);
   const u32 branch_to_after_trampoline = gen_branch(trampoline_restore_loc + 4, func_start + 4);
   add_code_change(trampoline_restore_loc + 0, original_instruction);
   add_code_change(trampoline_restore_loc + 4, branch_to_after_trampoline);
@@ -588,7 +552,7 @@ void ElfModLoader::create_vthook_callgated(u32 hook_target, u32 vfte_addr) {
 }
 
 void ElfModLoader::create_blhook_callgated(u32 hook_target, u32 bl_addr) {
-  const u32 bl_target = bl_addr + get_branch_offset(PowerPC::HostRead_Instruction(bl_addr));
+  const u32 bl_target = bl_addr + get_branch_offset(readi(bl_addr));
   const u32 callgate_fn_table_loc = add_callgate_entry(hook_target, bl_target);
   // BL will now redirect to the callgate func, leading to the dispatcher
   add_code_change(bl_addr, gen_branch_link(bl_addr, callgate_fn_table_loc));

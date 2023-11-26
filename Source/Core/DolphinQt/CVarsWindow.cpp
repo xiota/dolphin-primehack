@@ -13,16 +13,18 @@
 #include <QFontMetrics>
 #include <QtGlobal>
 
+#include <fstream>
+
 CVarListModel::CVarListModel(QObject* parent) : QAbstractTableModel(parent) {
   load_cvars();
-  update_memread();
+  update_cvar_cache();
 }
 
 void CVarListModel::get_column_widths(QFont const& font, std::array<int, CVarListModel::NUM_COLS>& width_out) {
   QFontMetrics fm(font);
-  for (int i = 0; i < width_out.size(); i++) {
+  for (size_t i = 0; i < width_out.size(); i++) {
     int col_size = 0;
-    for (int j = 0; j < cvar_list.size(); j++) {
+    for (size_t j = 0; j < cvar_list.size(); j++) {
       auto text = data(index(j, i));
 #if QT_VERSION >= 0x050b00
       col_size = std::max(col_size, fm.horizontalAdvance(text.toString()));
@@ -34,29 +36,31 @@ void CVarListModel::get_column_widths(QFont const& font, std::array<int, CVarLis
   }
 }
 
-void CVarListModel::update_memread() {
+void CVarListModel::update_cvar_cache() {
   cached_vals.clear();
   const auto get_value = [](prime::CVar const& var) -> QVariant {
-    switch (var.type) {
-    case prime::CVarType::INT8:
-      return prime::read8(var.addr);
-    case prime::CVarType::INT16:
-      return prime::read16(var.addr);
-    case prime::CVarType::INT32:
-      return prime::read32(var.addr);
-    case prime::CVarType::INT64:
-      return qulonglong{prime::read64(var.addr)};
-    case prime::CVarType::FLOAT32:
-      return prime::readf32(var.addr);
-    case prime::CVarType::FLOAT64: {
-      u64 tmp = prime::read64(var.addr);
-      return *reinterpret_cast<double*>(&tmp);
+    if (uint8_t const* val = std::get_if<uint8_t>(&var.value); val != nullptr) {
+      return *val;
     }
-    case prime::CVarType::BOOLEAN:
-      return static_cast<bool>(prime::read8(var.addr));
-    default:
-      return 0u;
+    if (uint16_t const* val = std::get_if<uint16_t>(&var.value); val != nullptr) {
+      return *val;
     }
+    if (uint32_t const* val = std::get_if<uint32_t>(&var.value); val != nullptr) {
+      return *val;
+    }
+    if (uint64_t const* val = std::get_if<uint64_t>(&var.value); val != nullptr) {
+      return qulonglong{*val};
+    }
+    if (float const* val = std::get_if<float>(&var.value); val != nullptr) {
+      return *val;
+    }
+    if (double const* val = std::get_if<double>(&var.value); val != nullptr) {
+      return *val;
+    }
+    if (bool const* val = std::get_if<bool>(&var.value); val != nullptr) {
+      return *val;
+    }
+    return 0u;
   };
 
   for (auto const& var : cvar_list) {
@@ -162,7 +166,7 @@ CVarsWindow::CVarsWindow(QWidget* parent) : QDialog(parent), list_model(this) {
   cvar_list->setCurrentIndex(QModelIndex());
   cvar_list->setContextMenuPolicy(Qt::CustomContextMenu);
   cvar_list->setWordWrap(false);
-  
+
   cvar_list->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
   std::array<int, 3> cols;
@@ -204,31 +208,13 @@ void CVarsWindow::save_presets() {
   for (auto const& var : list_model.get_var_list()) {
     std::ostringstream line;
     line << var.name << "=";
-    switch (var.type) {
-    case prime::CVarType::BOOLEAN:
-      line << (prime::read8(var.addr) ? "true" : "false");
-      break;
-    case prime::CVarType::INT8:
-      line << prime::read8(var.addr);
-      break;
-    case prime::CVarType::INT16:
-      line << prime::read16(var.addr);
-      break;
-    case prime::CVarType::INT32:
-      line << prime::read32(var.addr);
-      break;
-    case prime::CVarType::INT64:
-      line << prime::read64(var.addr);
-      break;
-    case prime::CVarType::FLOAT32:
-      line << prime::readf32(var.addr);
-      break;
-    case prime::CVarType::FLOAT64: {
-        u64 tmp = prime::read64(var.addr);
-        line << *reinterpret_cast<double*>(&tmp);
+    std::visit([&line](auto&& val) {
+      if constexpr (std::is_same_v<std::decay_t<decltype(val)>, bool>) {
+        line << (val ? "true" : "false");
+      } else {
+        line << val;
       }
-      break;
-    }
+    }, var.value);
     file_out << line.str() << "\n";
   }
   file_out.close();
@@ -242,8 +228,8 @@ void CVarsWindow::load_presets() {
     return;
   }
   mod->load_presets(path.toStdString());
-  
-  list_model.update_memread();
+
+  list_model.update_cvar_cache();
   emit list_model.dataChanged(list_model.index(0, 0), list_model.index(list_model.cvar_count(), 3));
 }
 
@@ -280,32 +266,32 @@ void CVarsWindow::on_value_entry(prime::CVar* var, QString const& new_val) {
   switch (var->type) {
   case prime::CVarType::INT8: {
       u8 val = static_cast<u8>(new_val.toInt());
-      mod->write_cvar(var->name, &val);
+      mod->write_cvar_request(var->name, val);
     }
     break;
   case prime::CVarType::INT16: {
       u16 val = static_cast<u16>(new_val.toInt());
-      mod->write_cvar(var->name, &val);
+      mod->write_cvar_request(var->name, val);
     }
     break;
   case prime::CVarType::INT32: {
       u32 val = static_cast<u32>(new_val.toInt());
-      mod->write_cvar(var->name, &val);
+      mod->write_cvar_request(var->name, val);
     }
     break;
   case prime::CVarType::INT64: {
       u64 val = static_cast<u64>(new_val.toLongLong());
-      mod->write_cvar(var->name, &val);
+      mod->write_cvar_request(var->name, val);
     }
     break;
   case prime::CVarType::FLOAT32: {
       float val = new_val.toFloat();
-      mod->write_cvar(var->name, &val);
+      mod->write_cvar_request(var->name, val);
     }
     break;
   case prime::CVarType::FLOAT64: {
       double val = new_val.toDouble();
-      mod->write_cvar(var->name, &val);
+      mod->write_cvar_request(var->name, val);
     }
     break;
   case prime::CVarType::BOOLEAN: {
@@ -316,17 +302,17 @@ void CVarsWindow::on_value_entry(prime::CVar* var, QString const& new_val) {
           cmp_no_case(val_str, "yes") ||
           cmp_no_case(val_str, "ok")) {
         val = true;
-        mod->write_cvar(var->name, &val);
+        mod->write_cvar_request(var->name, val);
       } else if (cmp_no_case(val_str, "false") ||
                  cmp_no_case(val_str, "off") ||
                  cmp_no_case(val_str, "no")) {
         val = false;
-        mod->write_cvar(var->name, &val);
+        mod->write_cvar_request(var->name, val);
       }
     }
     break;
   }
-  list_model.update_memread();
+  list_model.update_cvar_cache();
   emit list_model.dataChanged(list_model.index(0, 0), list_model.index(list_model.cvar_count(), 3));
 }
 

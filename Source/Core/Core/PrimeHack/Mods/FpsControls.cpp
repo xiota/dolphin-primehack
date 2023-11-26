@@ -1,8 +1,10 @@
 #include "Core/PrimeHack/Mods/FpsControls.h"
 
+#include "Core/PowerPC/MMU.h"
 #include "Core/PowerPC/PowerPC.h"
 #include "Core/PrimeHack/Mods/ContextSensitiveControls.h"
-#include "Core/PrimeHack/PrimeUtils.h"  //Loads HackConfig.h for us
+#include "Core/PrimeHack/PrimeUtils.h"
+#include "Core/System.h"
 
 #include "Common/Timer.h"
 
@@ -26,8 +28,9 @@ const std::array<std::tuple<int, int>, 4> prime_three_visors = {
 constexpr u32 ORBIT_STATE_GRAPPLE = 5;
 #define RIDLEY_STR(r) (r == Region::NTSC_J ? L"メタリドリー" : L"Meta Ridley")
 #define RIDLEY_STR_LEN(r) (r == Region::NTSC_J ? 6 : 11)
+}
 
-bool is_string_ridley(Region active_region, u32 string_base) {
+bool FpsControls::is_string_ridley(Region active_region, u32 string_base) {
   if (string_base == 0) {
     return false;
   }
@@ -44,7 +47,6 @@ bool is_string_ridley(Region active_region, u32 string_base) {
     string_base += 2;
   }
   return str_idx == str_len && read16(string_base) == 0;
-}
 }
 
 void FpsControls::run_mod(Game game, Region region) {
@@ -158,7 +160,8 @@ void FpsControls::calculate_pitch_locked(Game game, Region region) {
       break;
   }
 
-  Transform camera_tf(camera + camera_xf_offset);
+  Transform camera_tf;
+  camera_tf.read_from(*active_guard, camera + camera_xf_offset);
   pitch = asin(camera_tf.fwd().z);
   pitch = std::clamp(pitch, -1.52f, 1.52f);
 }
@@ -222,8 +225,8 @@ void FpsControls::handle_beam_visor_switch(std::array<int, 4> const &beams,
       // Prevent triggering more than one beam swap while one is currently in progress.
       std::chrono::duration<double, std::milli> elapsed = hr_clock::now() - beam_scroll_timeout;
       if (elapsed.count() > 800) {
-        prime::GetVariableManager()->set_variable("new_beam", static_cast<u32>(beam_id));
-        prime::GetVariableManager()->set_variable("beamchange_flag", u32{1});
+        prime::GetVariableManager()->set_variable(*active_guard, "new_beam", static_cast<u32>(beam_id));
+        prime::GetVariableManager()->set_variable(*active_guard, "beamchange_flag", u32{1});
         beam_scroll_timeout = hr_clock::now();
       }
     }
@@ -258,7 +261,7 @@ void FpsControls::handle_beam_visor_switch(std::array<int, 4> const &beams,
 
 void FpsControls::run_mod_menu(Game game, Region region) {
   if (region == Region::NTSC_U) {
-    u32 p0 = read32(GPR(13) - 0x2870);
+    u32 p0 = read32(Core::System::GetInstance().GetPPCState().gpr[13] - 0x2870);
     if (!mem_check(p0)) {
       return;
     }
@@ -267,17 +270,17 @@ void FpsControls::run_mod_menu(Game game, Region region) {
       return;
     }
 
-    handle_cursor(p0, p0 + 0xc0, region);
+    handle_cursor(*active_guard, p0, p0 + 0xc0, region);
   } else if (region == Region::NTSC_J) {
     if (game == Game::MENU_PRIME_1) {
-      handle_cursor(0x805a7da8, 0x805a7dac, region);
+      handle_cursor(*active_guard, 0x805a7da8, 0x805a7dac, region);
     }
     if (game == Game::MENU_PRIME_2) {
-      handle_cursor(0x805a7ba8, 0x805a7bac, region);
+      handle_cursor(*active_guard, 0x805a7ba8, 0x805a7bac, region);
     }
   } else if (region == Region::PAL) {
     u32 cursor_address = read32(0x80621ffc);
-    handle_cursor(cursor_address + 0xdc, cursor_address + 0x19c, region);
+    handle_cursor(*active_guard, cursor_address + 0xdc, cursor_address + 0x19c, region);
   }
 }
 
@@ -323,11 +326,11 @@ void FpsControls::run_mod_mp1(Region region) {
           set_code_group_state("beam_change", ModState::DISABLED);
         }
 
-        handle_reticle(cursor + 0x9c, cursor + 0x15c, region, GetFov());
+        handle_reticle(*active_guard, cursor + 0x9c, cursor + 0x15c, region, GetFov());
         menu_open = true;
       }
     } else if (HandleReticleLockOn()) {  // If we handle menus, this doesn't need to be ran
-      handle_reticle(cursor + 0x9c, cursor + 0x15c, region, GetFov());
+      handle_reticle(*active_guard, cursor + 0x9c, cursor + 0x15c, region, GetFov());
     }
   } else {
     if (menu_open) {
@@ -374,7 +377,8 @@ void FpsControls::run_mod_mp1_gc(Region region) {
   DevInfo("Player", "%08x", player);
 
   LOOKUP_DYN(player_xf);
-  Transform cplayer_xf(player_xf);
+  Transform cplayer_xf;
+  cplayer_xf.read_from(*active_guard, player_xf);
   LOOKUP_DYN(orbit_state);
   const u32 orbit_state_val = read32(orbit_state);
   if (orbit_state_val != ORBIT_STATE_GRAPPLE &&
@@ -405,7 +409,7 @@ void FpsControls::run_mod_mp1_gc(Region region) {
   writef32(1.52f, tweak_player + 0x134);
   writef32(0, angular_vel);
   cplayer_xf.build_rotation(yaw);
-  cplayer_xf.write_to(player_xf);
+  cplayer_xf.write_to(*active_guard, player_xf);
 
   for (int i = 0; i < 8; i++) {
     writef32(0, (tweak_player + 0x84) + i * 4);
@@ -470,11 +474,11 @@ void FpsControls::run_mod_mp2(Region region) {
           set_code_group_state("beam_change", ModState::DISABLED);
         }
 
-        handle_reticle(cursor + 0x9c, cursor + 0x15c, region, GetFov());
+        handle_reticle(*active_guard, cursor + 0x9c, cursor + 0x15c, region, GetFov());
         menu_open = true;
       }
     } else if (HandleReticleLockOn()) {
-      handle_reticle(cursor + 0x9c, cursor + 0x15c, region, GetFov());
+      handle_reticle(*active_guard, cursor + 0x9c, cursor + 0x15c, region, GetFov());
     }
   } else {
     if (menu_open) {
@@ -499,7 +503,7 @@ void FpsControls::run_mod_mp2(Region region) {
     writef32(FpsControls::pitch, armcannon_matrix + 0x24);
 
     LOOKUP(tweak_player_offset);
-    u32 tweak_player_address = read32(read32(GPR(13) + tweak_player_offset));
+    u32 tweak_player_address = read32(read32(Core::System::GetInstance().GetPPCState().gpr[13] + tweak_player_offset));
     if (mem_check(tweak_player_address)) {
       // This one's stored as degrees instead of radians
       writef32(87.0896f, tweak_player_address + 0x180);
@@ -518,12 +522,12 @@ void FpsControls::run_mod_mp2(Region region) {
   }
 }
 
-void null_players_on_destruct_mp2_gc(u32) {
+void null_players_on_destruct_mp2_gc(PowerPC::PowerPCState& ppc_state, PowerPC::MMU& mmu, u32) {
   // r27 is an iterator variable pointing to start of statemgr
-  write32(0, GPR(27) + 0x14fc);
+  mmu.Write_U32(0, ppc_state.gpr[27] + 0x14fc);
 
   // Original instruction: addi r27, r27, 4
-  GPR(27) += 4;
+  ppc_state.gpr[27] += 4;
 }
 
 void FpsControls::run_mod_mp2_gc(Region region) {
@@ -546,13 +550,14 @@ void FpsControls::run_mod_mp2_gc(Region region) {
   const u32 crosshair_color_rgba = show_crosshair ? GetGCCrosshairColor() : 0x4b7ea331;
   set_code_group_state("show_crosshair", show_crosshair ? ModState::ENABLED : ModState::DISABLED);
   LOOKUP(tweakgui_offset);
-  u32 crosshair_color_addr = read32(read32(GPR(13) + tweakgui_offset)) + 0x268;
+  u32 crosshair_color_addr = read32(read32(Core::System::GetInstance().GetPPCState().gpr[13] + tweakgui_offset)) + 0x268;
   if (show_crosshair) {
     write32(crosshair_color_rgba, crosshair_color_addr);
   }
-  
+
   LOOKUP_DYN(player_xf);
-  Transform cplayer_xf(player_xf);
+  Transform cplayer_xf;
+  cplayer_xf.read_from(*active_guard, player_xf);
   LOOKUP_DYN(orbit_state);
   LOOKUP_DYN(firstperson_pitch);
   if (read32(orbit_state) != ORBIT_STATE_GRAPPLE &&
@@ -567,7 +572,7 @@ void FpsControls::run_mod_mp2_gc(Region region) {
   }
 
   LOOKUP(tweak_player_offset);
-  const u32 tweak_player_address = read32(read32(GPR(13) + tweak_player_offset));
+  const u32 tweak_player_address = read32(read32(Core::System::GetInstance().GetPPCState().gpr[13] + tweak_player_offset));
   if (mem_check(tweak_player_address)) {
     // Freelook rotation speed tweak
     write32(0x4f800000, tweak_player_address + 0x188);
@@ -586,7 +591,7 @@ void FpsControls::run_mod_mp2_gc(Region region) {
     calculate_pitchyaw_delta();
     writef32(FpsControls::pitch, firstperson_pitch);
     cplayer_xf.build_rotation(yaw);
-    cplayer_xf.write_to(player_xf);
+    cplayer_xf.write_to(*active_guard, player_xf);
   }
 }
 
@@ -641,20 +646,20 @@ void FpsControls::mp3_handle_lasso(u32 grapple_state_addr) {
 
     grapple_hand_pos = std::clamp(grapple_hand_pos, 0.f, 1.0f);
 
-    prime::GetVariableManager()->set_variable("grapple_hand_x", grapple_hand_pos);
-    prime::GetVariableManager()->set_variable("grapple_hand_y", grapple_hand_pos / 4);
+    prime::GetVariableManager()->set_variable(*active_guard, "grapple_hand_x", grapple_hand_pos);
+    prime::GetVariableManager()->set_variable(*active_guard, "grapple_hand_y", grapple_hand_pos / 4);
 
     if (grapple_hand_pos >= 1.0f) {
       // State 4 completes the grapple (e.g pull door from frame)
-      prime::GetVariableManager()->set_variable("grapple_lasso_state", (u32) 4);
+      prime::GetVariableManager()->set_variable(*active_guard, "grapple_lasso_state", (u32) 4);
     } else {
       // State 2 "holds" the grapple for lasso/voltage.
-      prime::GetVariableManager()->set_variable("grapple_lasso_state", (u32) 2);
+      prime::GetVariableManager()->set_variable(*active_guard, "grapple_lasso_state", (u32) 2);
     }
   } else {
-    prime::GetVariableManager()->set_variable("grapple_hand_x", 0.f);
-    prime::GetVariableManager()->set_variable("grapple_hand_y", 0.f);
-    prime::GetVariableManager()->set_variable("grapple_lasso_state", (u32) 0);
+    prime::GetVariableManager()->set_variable(*active_guard, "grapple_hand_x", 0.f);
+    prime::GetVariableManager()->set_variable(*active_guard, "grapple_hand_y", 0.f);
+    prime::GetVariableManager()->set_variable(*active_guard, "grapple_lasso_state", (u32) 0);
 
     grapple_hand_pos = 0;
     grapple_force = 0;
@@ -679,14 +684,14 @@ void FpsControls::run_mod_mp3(Game active_game, Region active_region) {
   }
 
   LOOKUP_DYN(cursor);
-  const auto mp3_handle_cursor = [cursor, active_region] (bool locked, bool for_reticle) {
+  const auto mp3_handle_cursor = [this, cursor, active_region] (bool locked, bool for_reticle) {
     if (locked) {
       write32(0, cursor + 0x9c);
       write32(0, cursor + 0x15c);
     } else if (for_reticle) {
-      handle_reticle(cursor + 0x9c, cursor + 0x15c, active_region, GetFov());
+      handle_reticle(*active_guard, cursor + 0x9c, cursor + 0x15c, active_region, GetFov());
     } else {
-      handle_cursor(cursor + 0x9c, cursor + 0x15c, active_region);
+      handle_cursor(*active_guard, cursor + 0x9c, cursor + 0x15c, active_region);
     }
 
   };
@@ -737,7 +742,7 @@ void FpsControls::run_mod_mp3(Game active_game, Region active_region) {
     }
   }
 
-  prime::GetVariableManager()->set_variable("trigger_grapple", prime::CheckGrappleCtl() ? u32{1} : u32{0});
+  prime::GetVariableManager()->set_variable(*active_guard, "trigger_grapple", prime::CheckGrappleCtl() ? u32{1} : u32{0});
 
   LOOKUP_DYN(firstperson_pitch);
   LOOKUP_DYN(angular_momentum);
@@ -791,7 +796,7 @@ void FpsControls::run_mod_mp3(Game active_game, Region active_region) {
   // Gun damping uses its own TOC value, so screw it (I checked the binary)
   // Byte pattern to find the offset : c0?2???? ec23082a fc60f850
   LOOKUP(gun_lag_toc_offset);
-  u32 rtoc_gun_damp = GPR(2) + gun_lag_toc_offset;
+  u32 rtoc_gun_damp = Core::System::GetInstance().GetPPCState().gpr[2] + gun_lag_toc_offset;
   write32(0, rtoc_gun_damp);
   writef32(FpsControls::pitch, firstperson_pitch);
 
@@ -1762,7 +1767,7 @@ void FpsControls::init_mod_mp2_gc(Region region) {
     add_code_change(0x80015ee8, 0x4e800020, "show_crosshair"); // blr
 
     add_code_change(0x800614f8, 0xc022d3e8);
-    const int null_players_vmc_idx = PowerPC::RegisterVmcall(null_players_on_destruct_mp2_gc);
+    const int null_players_vmc_idx = Core::System::GetInstance().GetPowerPC().RegisterVmcall(null_players_on_destruct_mp2_gc);
     u32 null_players_vmc = gen_vmcall(null_players_vmc_idx, 0);
     add_code_change(0x80042994, null_players_vmc);
   } else if (region == Region::NTSC_J) {
@@ -1810,14 +1815,14 @@ void FpsControls::init_mod_mp2_gc(Region region) {
     add_code_change(0x80015f84, 0x4e800020, "show_crosshair"); // blr
 
     add_code_change(0x800615f8, 0xc022d3c0); // not c022d3d8 ???
-    const int null_players_vmc_idx = PowerPC::RegisterVmcall(null_players_on_destruct_mp2_gc);
+    const int null_players_vmc_idx = Core::System::GetInstance().GetPowerPC().RegisterVmcall(null_players_on_destruct_mp2_gc);
     u32 null_players_vmc = gen_vmcall(null_players_vmc_idx, 0);
     add_code_change(0x80042b04, null_players_vmc);
   } else {}
 }
 
-void wiimote_shake_override(u32) {
-  GPR(26) = CheckJump() ? 1 : 0;
+void wiimote_shake_override(PowerPC::PowerPCState& ppc_state, PowerPC::MMU&, u32) {
+  ppc_state.gpr[26] = CheckJump() ? 1 : 0;
 }
 
 void FpsControls::init_mod_mp3(Region region) {
@@ -1870,7 +1875,7 @@ void FpsControls::init_mod_mp3(Region region) {
 
   // Same for both.
   add_code_change(0x800614d0, 0x60000000, "visor_menu");
-  const int wiimote_shake_override_idx = PowerPC::RegisterVmcall(wiimote_shake_override);
+  const int wiimote_shake_override_idx = Core::System::GetInstance().GetPowerPC().RegisterVmcall(wiimote_shake_override);
   add_code_change(0x800a8fc0, gen_vmcall(wiimote_shake_override_idx, 0));
   has_beams = false;
 }
@@ -1903,7 +1908,7 @@ void FpsControls::init_mod_mp3_standalone(Region region) {
 
     // Steps over bounds checking on the reticle
     add_code_change(0x80017290, 0x48000120);
-    const int wiimote_shake_override_idx = PowerPC::RegisterVmcall(wiimote_shake_override);
+    const int wiimote_shake_override_idx = Core::System::GetInstance().GetPowerPC().RegisterVmcall(wiimote_shake_override);
     add_code_change(0x800a8f40, gen_vmcall(wiimote_shake_override_idx, 0));
   } else if (region == Region::NTSC_J) {
     add_code_change(0x80081018, 0xec010072);

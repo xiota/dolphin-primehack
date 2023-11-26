@@ -4,7 +4,7 @@
 
 namespace prime {
 
-void SpringballButton::run_mod(Game game, Region region) {  
+void SpringballButton::run_mod(Game game, Region region) {
   LOOKUP_DYN(player);
   if (player == 0) {
     return;
@@ -86,11 +86,11 @@ void SpringballButton::springball_check(u32 ball_address, u32 movement_address) 
     const u32 ball_state = read32(ball_address);
     const u32 movement_state = read32(movement_address);
 
-    if ((ball_state == 1 || ball_state == 2) && movement_state == 0) { 
-      prime::GetVariableManager()->set_variable("springball_trigger", u8{ 1 });
+    if ((ball_state == 1 || ball_state == 2) && movement_state == 0) {
+      prime::GetVariableManager()->set_variable(*active_guard, "springball_trigger", u8{ 1 });
     }
     else {
-      prime::GetVariableManager()->set_variable("springball_trigger", u8{ 0 });
+      prime::GetVariableManager()->set_variable(*active_guard, "springball_trigger", u8{ 0 });
     }
   }
 }

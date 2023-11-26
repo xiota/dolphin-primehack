@@ -1,6 +1,9 @@
 #include "Core/PrimeHack/Mods/ViewModifier.h"
 
+#include "Core/PowerPC/PowerPC.h"
+#include "Core/PowerPC/MMU.h"
 #include "Core/PrimeHack/PrimeUtils.h"
+#include "Core/System.h"
 
 namespace prime {
 void ViewModifier::run_mod(Game game, Region region) {
@@ -134,7 +137,7 @@ void ViewModifier::run_mod_mp1_gc() {
   const u32 version_offset = (hack_mgr->get_active_region() == Region::PAL ||
                               hack_mgr->get_active_game() == Game::PRIME_1_GCN_R2 ? 0x10 : 0);
 
-  const u32 r13 = GPR(13);
+  const u32 r13 = Core::System::GetInstance().GetPPCState().gpr[13];
   const float fov = std::min(GetFov(), 170.f);
   writef32(fov, camera + 0x15c + version_offset);
   writef32(fov, r13 + fov_fp_offset);
@@ -210,19 +213,22 @@ void ViewModifier::run_mod_mp2_gc() {
   const u32 camera = read32(object_list + ((camera_id & 0x3ff) << 3) + 4);
   const float fov = std::min(GetFov(), 170.f);
   writef32(fov, camera + 0x1f0);
-  adjust_viewmodel(fov, read32(read32(GPR(13) + tweakgun_offset)) + 0x50, camera + 0x1cc, 0x3d200000);
+  adjust_viewmodel(fov, read32(read32(Core::System::GetInstance().GetPPCState().gpr[13] + tweakgun_offset)) + 0x50, camera + 0x1cc, 0x3d200000);
 
   set_code_group_state("culling", (GetCulling() || GetFov() > 101.f) ? ModState::ENABLED : ModState::DISABLED);
   DevInfo("camera", "%08X", camera);
 }
 
-void ViewModifier::on_camera_change(u32) {
+void ViewModifier::on_camera_change(PowerPC::PowerPCState& ppc_state, PowerPC::MMU& mmu, u32) {
   // Original inst: stw r0, 0x14(r6)
-  write32(GPR(0), 0x14 + GPR(6));
+  mmu.Write_U32(ppc_state.gpr[0], 0x14 + ppc_state.gpr[6]);
 
   ViewModifier* mod = static_cast<ViewModifier*>(GetHackManager()->get_mod("fov_modifier"));
 
-  mod->adjust_fov_mp3(std::min(GetFov(), 170.f), static_cast<u16>(GPR(0)));
+  Core::CPUThreadGuard guard(Core::System::GetInstance());
+  mod->set_temporary_cpu_guard(&guard);
+  mod->adjust_fov_mp3(std::min(GetFov(), 170.f), static_cast<u16>(ppc_state.gpr[0]));
+  mod->set_temporary_cpu_guard(nullptr);
 }
 
 void ViewModifier::adjust_fov_mp3(float fov, u16 camera_id) {
@@ -379,7 +385,7 @@ void ViewModifier::init_mod_mp2_gc(Region region) {
 }
 
 void ViewModifier::init_mod_mp3(Region region) {
-  const int on_camera_change_fn = PowerPC::RegisterVmcall(ViewModifier::on_camera_change);
+  const int on_camera_change_fn = Core::System::GetInstance().GetPowerPC().RegisterVmcall(ViewModifier::on_camera_change);
   const u32 on_camera_change_vmc = gen_vmcall(on_camera_change_fn, 0);
 
   if (region == Region::NTSC_U) {
@@ -402,7 +408,7 @@ void ViewModifier::init_mod_mp3(Region region) {
 }
 
 void ViewModifier::init_mod_mp3_standalone(Region region) {
-  const int on_camera_change_fn = PowerPC::RegisterVmcall(ViewModifier::on_camera_change);
+  const int on_camera_change_fn = Core::System::GetInstance().GetPowerPC().RegisterVmcall(ViewModifier::on_camera_change);
   const u32 on_camera_change_vmc = gen_vmcall(on_camera_change_fn, 0);
   if (region == Region::NTSC_U) {
     add_code_change(0x8007f504, 0x60000000);

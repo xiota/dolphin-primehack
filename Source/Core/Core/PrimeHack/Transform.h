@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Core/Core.h"
 #include "Common/CommonTypes.h"
 
 namespace prime {
@@ -7,7 +8,6 @@ namespace prime {
 struct vec3 {
   vec3() : vec3(0, 0, 0) {}
   vec3(float x, float y, float z) : x(x), y(y), z(z) {}
-  vec3(u32 address) { read_from(address); }
 
   union {
     float arr[3];
@@ -40,15 +40,13 @@ struct vec3 {
     return vec3(y * rhs.z - z * rhs.y, z * rhs.x - x * rhs.z, x * rhs.y - y * rhs.x);
   }
 
-  void read_from(u32 address);
-  void write_to(u32 address);
+  void read_from(Core::CPUThreadGuard const& guard, u32 address);
+  void write_to(Core::CPUThreadGuard const& guard, u32 address);
 };
 
 struct Transform {
   float m[3][4];
   Transform();
-  Transform(float yaw) { build_rotation(yaw); }
-  Transform(u32 address) { read_from(address); }
 
   vec3 right() const {
     return vec3(m[0][0], m[1][0], m[2][0]);
@@ -77,8 +75,8 @@ struct Transform {
   Transform operator*(Transform const &rhs) const;
   Transform& operator*=(Transform const &rhs);
   void build_rotation(float yaw);
-  
-  void read_from(u32 address);
-  void write_to(u32 address);
+
+  void read_from(Core::CPUThreadGuard const& guard, u32 address);
+  void write_to(Core::CPUThreadGuard const& guard, u32 address);
 };
 }

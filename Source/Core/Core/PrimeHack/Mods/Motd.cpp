@@ -70,7 +70,7 @@ bool Motd::init_mod(Game game, Region region) {
 }
 
 void Motd::run_mod(Game game, Region region) {
-  constexpr auto write_string = [](std::string const& str, u32 addr) {
+  const auto write_string = [this](std::string const& str, u32 addr) {
     write32(static_cast<u32>(str.length() + 1), addr);
     for (size_t i = 0; i < str.length(); i++) {
       write8(str[i], addr + 4 + static_cast<u32>(i));

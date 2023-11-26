@@ -74,7 +74,7 @@ void ContextSensitiveControls::run_mod(Game game, Region region) {
         if (CheckLeft()) {
           velocity -= 0.04f;
         }
-        prime::GetVariableManager()->set_variable("rotary_velocity", velocity);
+        prime::GetVariableManager()->set_variable(*active_guard, "rotary_velocity", velocity);
       }
     }
 

@@ -3,15 +3,18 @@
 #include "Core/PrimeHack/AddressDB.h"
 #include "Core/PrimeHack/HackManager.h"
 
+#include "Common/BitUtils.h"
+#include "Common/Logging/Log.h"
 #include "Core/PowerPC/MMU.h"
+#include "Core/System.h"
 
 namespace prime {
 
 bool PrimeMod::should_apply_changes() const {
   std::vector<CodeChange> const& cc_vec = get_changes_to_apply();
-      
+
   for (CodeChange const& change : cc_vec) {
-    if (PowerPC::HostRead_U32(change.address) != change.var) {
+    if (read32(change.address) != change.var) {
       return true;
     }
   }
@@ -21,9 +24,9 @@ bool PrimeMod::should_apply_changes() const {
 void PrimeMod::apply_instruction_changes(bool invalidate)  {
   auto active_changes = get_changes_to_apply();
   for (CodeChange const& change : active_changes) {
-    PowerPC::HostWrite_U32(change.var, change.address);
+    write32(change.var, change.address);
     if (invalidate) {
-      PowerPC::ScheduleInvalidateCacheThreadSafe(change.address);
+      Core::System::GetInstance().GetPowerPC().ScheduleInvalidateCacheThreadSafe(change.address);
     }
   }
 }
@@ -70,6 +73,11 @@ void PrimeMod::set_state(ModState new_state) {
   on_state_change(original);
 }
 
+void PrimeMod::set_state_no_notify(ModState new_state) {
+  ModState original = this->state;
+  this->state = new_state;
+}
+
 void PrimeMod::add_code_change(u32 addr, u32 code, std::string_view group) {
   if (group != "") {
     group_change& cg = code_groups[std::string(group)];
@@ -88,7 +96,7 @@ void PrimeMod::set_code_change(u32 address, u32 var) {
 
 void PrimeMod::update_original_instructions() {
   for (u32 addr : pending_change_backups) {
-    original_instructions.emplace_back(addr, PowerPC::HostRead_Instruction(addr));
+    original_instructions.emplace_back(addr, readi(addr));
   }
   pending_change_backups.clear();
 }
@@ -97,8 +105,103 @@ u32 PrimeMod::lookup_address(std::string_view name) {
   return addr_db->lookup_address(hack_mgr->get_active_game(), hack_mgr->get_active_region(), name);
 }
 
-u32 PrimeMod::lookup_dynamic_address(std::string_view name) {
-  return addr_db->lookup_dynamic_address(hack_mgr->get_active_game(), hack_mgr->get_active_region(), name);
+u32 PrimeMod::lookup_dynamic_address(std::string_view name) const {
+  return addr_db->lookup_dynamic_address(*active_guard, hack_mgr->get_active_game(), hack_mgr->get_active_region(), name);
 }
 
+u8 PrimeMod::read8(u32 addr) const {
+  if (active_guard == nullptr) {
+    WARN_LOG_FMT(POWERPC, "Attempted active mod code outside of critical section");
+    return 0;
+  }
+  return PowerPC::MMU::HostRead_U8(*active_guard, addr);
+}
+
+u16 PrimeMod::read16(u32 addr) const {
+  if (active_guard == nullptr) {
+    WARN_LOG_FMT(POWERPC, "Attempted active mod code outside of critical section");
+    return 0;
+  }
+  return PowerPC::MMU::HostRead_U16(*active_guard, addr);
+}
+
+u32 PrimeMod::read32(u32 addr) const {
+  if (active_guard == nullptr) {
+    WARN_LOG_FMT(POWERPC, "Attempted active mod code outside of critical section");
+    return 0;
+  }
+  return PowerPC::MMU::HostRead_U32(*active_guard, addr);
+}
+
+u32 PrimeMod::readi(u32 addr) const {
+  if (active_guard == nullptr) {
+    WARN_LOG_FMT(POWERPC, "Attempted active mod code outside of critical section");
+    return 0;
+  }
+  return PowerPC::MMU::HostRead_Instruction(*active_guard, addr);
+}
+
+u64 PrimeMod::read64(u32 addr) const {
+  if (active_guard == nullptr) {
+    WARN_LOG_FMT(POWERPC, "Attempted active mod code outside of critical section");
+    return 0;
+  }
+  return PowerPC::MMU::HostRead_U64(*active_guard, addr);
+}
+
+float PrimeMod::readf32(u32 addr) const {
+  if (active_guard == nullptr) {
+    WARN_LOG_FMT(POWERPC, "Attempted active mod code outside of critical section");
+    return 0;
+  }
+  return Common::BitCast<float>(read32(addr));
+}
+
+void PrimeMod::write8(u8 var, u32 addr) const {
+  if (active_guard == nullptr) {
+    WARN_LOG_FMT(POWERPC, "Attempted active mod code outside of critical section");
+    return;
+  }
+  PowerPC::MMU::HostWrite_U8(*active_guard, var, addr);
+}
+
+void PrimeMod::write16(u16 var, u32 addr) const {
+  if (active_guard == nullptr) {
+    WARN_LOG_FMT(POWERPC, "Attempted active mod code outside of critical section");
+    return;
+  }
+  PowerPC::MMU::HostWrite_U16(*active_guard, var, addr);
+}
+
+void PrimeMod::write32(u32 var, u32 addr) const {
+  if (active_guard == nullptr) {
+    WARN_LOG_FMT(POWERPC, "Attempted active mod code outside of critical section");
+    return;
+  }
+  PowerPC::MMU::HostWrite_U32(*active_guard, var, addr);
+}
+
+void PrimeMod::write64(u64 var, u32 addr) const {
+  if (active_guard == nullptr) {
+    WARN_LOG_FMT(POWERPC, "Attempted active mod code outside of critical section");
+    return;
+  }
+  PowerPC::MMU::HostWrite_U64(*active_guard, var, addr);
+}
+
+void PrimeMod::writef32(float var, u32 addr) const {
+  if (active_guard == nullptr) {
+    WARN_LOG_FMT(POWERPC, "Attempted active mod code outside of critical section");
+    return;
+  }
+  PowerPC::MMU::HostWrite_F32(*active_guard, var, addr);
+}
+
+void PrimeMod::writef64(double var, u32 addr) const {
+  if (active_guard == nullptr) {
+    WARN_LOG_FMT(POWERPC, "Attempted active mod code outside of critical section");
+    return;
+  }
+  PowerPC::MMU::HostWrite_F64(*active_guard, var, addr);
+}
 }

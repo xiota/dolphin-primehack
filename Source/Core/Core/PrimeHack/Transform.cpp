@@ -1,21 +1,23 @@
 #include "Core/PrimeHack/Transform.h"
-#include "Core/PrimeHack/PrimeUtils.h"
+
+#include "Core/PowerPC/MMU.h"
 #include "Core/PowerPC/PowerPC.h"
+#include "Core/PrimeHack/PrimeUtils.h"
 
 #include <cstring>
 #include <cmath>
 
 namespace prime {
 
-void vec3::read_from(u32 address) {
+void vec3::read_from(Core::CPUThreadGuard const& guard, u32 address) {
   for (int i = 0; i < 3; i++) {
-    arr[i] = readf32(address + i * 4);
+    arr[i] = PowerPC::MMU::HostRead_F32(guard, address + i * 4);
   }
 }
 
-void vec3::write_to(u32 address) {
+void vec3::write_to(Core::CPUThreadGuard const& guard, u32 address) {
   for (int i = 0; i < 3; i++) {
-    writef32(arr[i], address + i * 4);
+    PowerPC::MMU::HostWrite_F32(guard, arr[i], address + i * 4);
   }
 }
 
@@ -57,29 +59,29 @@ Transform& Transform::operator*=(Transform const& rhs) {
 void Transform::build_rotation(float yaw) {
   yaw -= (3.141592654f / 2.f);
   const float sy = sin(yaw), cy = cos(yaw);
-  
+
   m[0][0] = cy;
   m[1][0] = sy;
   m[2][0] = 0;
-  
+
   m[0][1] = -sy;
   m[1][1] = cy;
   m[2][1] = 0;
-  
+
   m[0][2] = 0;
   m[1][2] = 0;
   m[2][2] = 1.f;
 }
 
-void Transform::read_from(u32 address) {
+void Transform::read_from(Core::CPUThreadGuard const& guard, u32 address) {
   for (int i = 0; i < sizeof(Transform) / 4; i++) {
-    m[i / 4][i % 4] = readf32(address + i * 4);
+    m[i / 4][i % 4] = PowerPC::MMU::HostRead_F32(guard, address + i * 4);
   }
 }
 
-void Transform::write_to(u32 address) {
+void Transform::write_to(Core::CPUThreadGuard const& guard, u32 address) {
   for (int i = 0; i < sizeof(Transform) / 4; i++) {
-    writef32(m[i / 4][i % 4], address + i * 4);
+    PowerPC::MMU::HostWrite_F32(guard, m[i / 4][i % 4], address + i * 4);
   }
 }
 }

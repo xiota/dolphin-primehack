@@ -27,6 +27,7 @@ private:
   // ------------------------------
   // -----Active Mod Functions-----
   // ------------------------------
+  bool is_string_ridley(Region active_region, u32 string_base);
   void calculate_pitch_delta();
   void calculate_pitch_locked(Game game, Region region);
   void calculate_pitch_to_target(float target_pitch);

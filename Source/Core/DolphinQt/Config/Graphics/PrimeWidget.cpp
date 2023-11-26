@@ -243,14 +243,6 @@ void PrimeWidget::ConnectWidgets()
   });
 }
 
-void PrimeWidget::LoadSettings()
-{
-}
-
-void PrimeWidget::SaveSettings()
-{
-}
-
 void PrimeWidget::AddDescriptions()
 {
   static const char TR_GUNEFFECTS[] = QT_TR_NOOP(

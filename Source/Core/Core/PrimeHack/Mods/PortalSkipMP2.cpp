@@ -1,7 +1,10 @@
 #include "Core/PrimeHack/Mods/PortalSkipMP2.h"
 
+#include "Core/Core.h"
+#include "Core/PowerPC/PowerPC.h"
+#include "Core/PowerPC/MMU.h"
 #include "Core/PrimeHack/PrimeUtils.h"
-#include "Core/PowerPC/Interpreter/Interpreter.h"
+#include "Core/System.h"
 
 namespace prime {
 namespace {
@@ -9,14 +12,17 @@ constexpr u32 kAgonWorldId = 0x42b935e4;
 constexpr u32 kTorvusWorldId = 0x3dfd2249;
 constexpr u32 kSanctuaryWorldId = 0x1baa96c2;
 
-void fix_layer_bits(u32 param) {
+void fix_layer_bits(PowerPC::PowerPCState& ppc_state, PowerPC::MMU& mmu, u32 param) {
   PortalSkipMP2* mod = static_cast<PortalSkipMP2*>(GetHackManager()->get_mod("portal_skip_mp2"));
   if (mod != nullptr) {
+    Core::CPUThreadGuard guard(Core::System::GetInstance());
+    mod->set_temporary_cpu_guard(&guard);
     mod->fix_portal_terminal_layer_bits();
+    mod->set_temporary_cpu_guard(nullptr);
   }
 
   // Original instruction: mr r3, r30
-  GPR(3) = GPR(30);
+  ppc_state.gpr[3] = ppc_state.gpr[30];
 }
 }
 
@@ -46,7 +52,7 @@ void PortalSkipMP2::run_mod(Game game, Region region) {
   if (game != Game::PRIME_2 && game != Game::PRIME_2_GCN) {
     return;
   }
-   
+
   LOOKUP_DYN(world_id);
 
   LOOKUP_DYN(object_list);
@@ -67,7 +73,7 @@ void PortalSkipMP2::run_mod(Game game, Region region) {
   }
   const u32 area_id = read32(player + 4);
 
-  const auto find_object = [object_list](u32 editor_id) -> u32 {
+  const auto find_object = [this, object_list](u32 editor_id) -> u32 {
     for (int i = 0; i < 1024; i++) {
       const u32 object_ptr = read32(object_list + (i * 8) + 4);
       if (object_ptr != 0 && read32(object_ptr + 0xc) == editor_id) {
@@ -106,7 +112,7 @@ void PortalSkipMP2::run_mod(Game game, Region region) {
           }
         }
       }
-      
+
       const u32 timer_conn_vec_size = read32(seq_timer_obj + conn_vec_offset);
       const u32 timer_conn_vec = read32(seq_timer_obj + conn_vec_offset + 0x8);
       if (timer_conn_vec_size != 0 && timer_conn_vec != 0) {
@@ -141,7 +147,7 @@ void PortalSkipMP2::run_mod(Game game, Region region) {
 
 bool PortalSkipMP2::init_mod(Game game, Region region) {
   if (game == Game::PRIME_2) {
-    const int fix_portal_terminal_fn = PowerPC::RegisterVmcall(fix_layer_bits);
+    const int fix_portal_terminal_fn = Core::System::GetInstance().GetPowerPC().RegisterVmcall(fix_layer_bits);
     const u32 fix_vmc = gen_vmcall(fix_portal_terminal_fn, 0);
     if (region == Region::NTSC_U) {
       add_code_change(0x801e6948, fix_vmc, "disable_portal_cutscene");
@@ -154,7 +160,7 @@ bool PortalSkipMP2::init_mod(Game game, Region region) {
       add_code_change(0x801e5950, 0x48000114, "disable_portal_cutscene");
     }
   } else if (game == Game::PRIME_2_GCN) {
-    const int fix_portal_terminal_fn = PowerPC::RegisterVmcall(fix_layer_bits);
+    const int fix_portal_terminal_fn = Core::System::GetInstance().GetPowerPC().RegisterVmcall(fix_layer_bits);
     const u32 fix_vmc = gen_vmcall(fix_portal_terminal_fn, 0);
     if (region == Region::NTSC_U) {
       add_code_change(0x800b7194, fix_vmc, "disable_portal_cutscene");

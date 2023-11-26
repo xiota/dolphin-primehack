@@ -1778,4 +1778,14 @@ void WriteU64SwapFromJitArm64(u64 var, u32 address, MMU& mmu)
 {
   mmu.Write_U64_Swap(var, address);
 }
+
+// Additional junk for my sanity
+float MMU::Read_F32(u32 address) {
+  return Common::BitCast<float>(Read_U32(address));
+}
+
+void MMU::Write_F32(float var, u32 address) {
+  u32 uvar = Common::BitCast<u32>(var);
+  Write_U32(uvar, address);
+}
 }  // namespace PowerPC

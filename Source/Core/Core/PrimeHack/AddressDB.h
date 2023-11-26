@@ -5,6 +5,7 @@
 #include <string_view>
 #include <vector>
 
+#include "Core/Core.h"
 #include "Core/PrimeHack/PrimeMod.h"
 #include "Common/CommonTypes.h"
 
@@ -25,7 +26,7 @@ public:
   void register_dynamic_address(Game game, std::string_view name, std::string_view source_var,
                                 std::vector<region_triple>&& offsets);
   u32 lookup_address(Game game, Region region, std::string_view name) const;
-  u32 lookup_dynamic_address(Game game, Region region, std::string_view name) const;
+  u32 lookup_dynamic_address(Core::CPUThreadGuard const& guard, Game game, Region region, std::string_view name) const;
 
 private:
   struct DynamicVariable {

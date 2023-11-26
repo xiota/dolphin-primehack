@@ -124,6 +124,7 @@ std::tuple<double, double> GetPrimeStickXY();
 std::tuple<bool, bool> GetBVMenuOptions();
 
 std::tuple<double, double, bool, bool, bool, bool, bool> PrimeSettings();
+WiimoteSource GetSource(unsigned int index);
 }  // namespace Wiimote
 
 namespace WiimoteReal

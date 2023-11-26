@@ -1,5 +1,4 @@
 #include "Core/PrimeHack/Quaternion.h"
-#include "Core/PrimeHack/PrimeUtils.h"
 
 #include <cmath>
 
@@ -33,7 +32,7 @@ quat& quat::operator*=(quat const& rhs) {
   //float _w = w * rhs.w - axis().dot(rhs.axis());
   //vec3 _xyz = axis().cross(rhs.axis()) + (rhs.axis() * w) + (axis() * rhs.w);
   //return *this = quat(_xyz.x, _xyz.y, _xyz.z, _w);
-  
+
   quat orig = *this;
   w = orig.w * rhs.w - vec3(orig.x, orig.y, orig.z).dot(vec3(rhs.x, rhs.y, rhs.z));
   x = orig.y * rhs.z - orig.z * rhs.y + orig.w * rhs.x + orig.x * rhs.w;
@@ -52,20 +51,6 @@ void quat::rotate_y(float t) {
 
 void quat::rotate_z(float t) {
   *this *= quat(vec3(0, 0, 1), t);
-}
-
-void quat::write_to(u32 address) {
-  writef32(x, address + 0x0);
-  writef32(y, address + 0x4);
-  writef32(z, address + 0x8);
-  writef32(w, address + 0xc);
-}
-
-void quat::read_from(u32 address) {
-  x = readf32(address + 0x0);
-  y = readf32(address + 0x4);
-  z = readf32(address + 0x8);
-  w = readf32(address + 0xc);
 }
 
 }

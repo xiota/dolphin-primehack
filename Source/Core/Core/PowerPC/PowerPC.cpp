@@ -295,7 +295,7 @@ void PowerPCManager::Init(CPUCore cpu_core)
     m_breakpoints.ClearAllTemporary();
 }
 
-void vmcall_noop(PowerPCState& ppc_state, u32 param) {
+void vmcall_noop(PowerPCState& ppc_state, MMU&, u32 param) {
   WARN_LOG_FMT(POWERPC, "Executed unhandled vmcall, PC={:#x} VMFP={}", ppc_state.pc, param);
 }
 
@@ -343,7 +343,7 @@ void PowerPCManager::RegisterVmcallWithIndex(int index, vm_call pfn) {
 }
 
 int PowerPCManager::RegisterVmcall(vm_call pfn) {
-  for (int i = 0; i < ppcState.vmcall_table.size(); i++) {
+  for (int i = 0; i < m_ppc_state.vmcall_table.size(); i++) {
     if (m_ppc_state.vmcall_table[i] == vmcall_noop) {
       m_ppc_state.vmcall_table[i] = pfn;
       return i;
@@ -353,7 +353,7 @@ int PowerPCManager::RegisterVmcall(vm_call pfn) {
 }
 
 void PowerPCManager::VmcallDefaultFn(u32 param) {
-  vmcall_noop(param);
+  vmcall_noop(m_ppc_state, m_system.GetMMU(), param);
 }
 
 CoreMode PowerPCManager::GetMode() const

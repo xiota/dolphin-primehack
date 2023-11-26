@@ -7,7 +7,7 @@ namespace prime {
   void BloomIntensityMP3::replace_start_bloom_func(u32 branch_pos, u32 bloom_func) {
     u32 lis, ori;
     std::tie<u32, u32>(lis, ori) = prime::GetVariableManager()->make_lis_ori(16, "bloom_intensity");
-    prime::GetVariableManager()->set_variable("bloom_intensity", slider_val);
+    prime::GetVariableManager()->set_variable(*active_guard, "bloom_intensity", slider_val);
     add_code_change(bloom_func, 0x48000000 | ((branch_pos - bloom_func) & 0x3fffffc));
     add_code_change(branch_pos, lis);                // lis r16, bloom_intensity
     add_code_change(branch_pos + 0x04, ori);         // ori r16, r16, bloom_intensity
@@ -54,7 +54,7 @@ namespace prime {
     case Game::PRIME_3_STANDALONE:
       if (slider_val != (GetBloomIntensity() / 100.f)) {
         slider_val = (GetBloomIntensity() / 100.f);
-        prime::GetVariableManager()->set_variable("bloom_intensity", slider_val);
+        prime::GetVariableManager()->set_variable(*active_guard, "bloom_intensity", slider_val);
       }
       break;
     default:

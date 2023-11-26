@@ -3,18 +3,19 @@
 #include <string>
 #include <map>
 
+#include "Core/Core.h"
 #include "Common/CommonTypes.h"
 
 namespace prime {
 
 class EmuVariableManager {
 public:
-  void set_variable(const std::string& variable, u8 value);
-  void set_variable(const std::string& variable, u32 value);
-  void set_variable(const std::string& variable, float value);
+  void set_variable(Core::CPUThreadGuard const& guard, const std::string& variable, u8 value);
+  void set_variable(Core::CPUThreadGuard const& guard, const std::string& variable, u32 value);
+  void set_variable(Core::CPUThreadGuard const& guard, const std::string& variable, float value);
 
-  u32 get_uint(const std::string& variable) const;
-  float get_float(const std::string& variable) const;
+  u32 get_uint(Core::CPUThreadGuard const& guard, const std::string& variable) const;
+  float get_float(Core::CPUThreadGuard const& guard, const std::string& variable) const;
   u32 get_address(const std::string& variable) const;
 
   void register_variable(const std::string& name);

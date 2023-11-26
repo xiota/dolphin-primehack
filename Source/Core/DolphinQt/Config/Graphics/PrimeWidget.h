@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "DolphinQt/Config/Graphics/GraphicsWidget.h"
+#include <QWidget>
 
 class GraphicsWindow;
 class QCheckBox;
@@ -19,15 +19,12 @@ class ConfigRadioInt;
 class QPushButton;
 class QColorDialog;
 
-class PrimeWidget final : public GraphicsWidget {
-
+class PrimeWidget final : public QWidget {
+  Q_OBJECT
 public:
   explicit PrimeWidget(GraphicsWindow* parent);
 
 private:
-  void LoadSettings() override;
-  void SaveSettings() override;
-
   void ToggleShowCrosshair(bool mode);
   void ArmPositionModeChanged(bool mode);
 

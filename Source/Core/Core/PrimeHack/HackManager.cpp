@@ -1,14 +1,12 @@
 #include "Core/PrimeHack/HackManager.h"
 
-#include "Core/PrimeHack/HackConfig.h"
-#include "Core/PrimeHack/PrimeUtils.h"
-
-#include "Core/PowerPC/PowerPC.h"
-#include "Core/PowerPC/MMU.h"
-
 #include "Core/ConfigManager.h"
 #include "Core/Config/MainSettings.h"
-
+#include "Core/PrimeHack/HackConfig.h"
+#include "Core/PrimeHack/PrimeUtils.h"
+#include "Core/PowerPC/PowerPC.h"
+#include "Core/PowerPC/MMU.h"
+#include "Core/System.h"
 #include "InputCommon/GenericMouse.h"
 
 namespace prime {
@@ -23,14 +21,14 @@ HackManager::HackManager()
                             ((static_cast<u32>(c) << 8) & 0x0000ff00) | \
                             (static_cast<u32>(d) & 0x000000ff))
 
-void HackManager::run_active_mods() {
+void HackManager::run_active_mods(const Core::CPUThreadGuard& cpu_guard) {
   // When launching a new title, the EH being 0 is a good sign
   // that the game isn't done loading yet
-  u32 exception_hook = read32(0x80000048);
+  u32 exception_hook = PowerPC::MMU::HostRead_U32(cpu_guard, 0x80000048);
   if (exception_hook == 0) {
     return;
   }
-  u32 game_sig = PowerPC::HostRead_Instruction(0x8046d340);
+  u32 game_sig = PowerPC::MMU::HostRead_Instruction(cpu_guard, 0x8046d340);
   switch (game_sig)
   {
   case 0x38000018:
@@ -74,7 +72,7 @@ void HackManager::run_active_mods() {
     active_region = Region::PAL;
     break;
   case 0x80010070:
-    if (PowerPC::HostRead_U32(0x80576ae8) == 0x7d415378) {
+    if (PowerPC::MMU::HostRead_U32(cpu_guard, 0x80576ae8) == 0x7d415378) {
       active_game = Game::PRIME_3;
       active_region = Region::NTSC_U;
     }
@@ -84,7 +82,7 @@ void HackManager::run_active_mods() {
     }
     break;
   case 0x3a800000:
-    if (PowerPC::HostRead_U32(0x805795a4) == 0x7d415378) {
+    if (PowerPC::MMU::HostRead_U32(cpu_guard, 0x805795a4) == 0x7d415378) {
       active_game = Game::PRIME_3;
       active_region = Region::PAL;
     }
@@ -94,11 +92,11 @@ void HackManager::run_active_mods() {
     }
     break;
   default:
-    u32 region_code = PowerPC::HostRead_U32(0x80000000);
+    u32 region_code = PowerPC::MMU::HostRead_U32(cpu_guard, 0x80000000);
     if (region_code == FOURCC('G', 'M', '8', 'E')) {
       active_region = Region::NTSC_U;
 
-      const u8 version = read8(0x80000007);
+      const u8 version = PowerPC::MMU::HostRead_U8(cpu_guard, 0x80000007);
       switch (version) {
         case 0:
           active_game = Game::PRIME_1_GCN;
@@ -153,6 +151,11 @@ void HackManager::run_active_mods() {
     break;
   }
 
+  // Before doing any mod-related code, set the cpu guard
+  for (auto& mod : mods) {
+    mod.second->set_temporary_cpu_guard(&cpu_guard);
+  }
+
   if (active_game != last_game || active_region != last_region) {
     for (auto& mod : mods) {
       mod.second->reset_mod();
@@ -186,6 +189,10 @@ void HackManager::run_active_mods() {
         mod.second->run_mod(active_game, active_region);
       }
     }
+  }
+
+  for (auto& mod : mods) {
+    mod.second->set_temporary_cpu_guard(nullptr);
   }
   prime::g_mouse_input->ResetDeltas();
 }
@@ -264,6 +271,22 @@ void HackManager::enable_mod(std::string const& name) {
   result->second->set_state(ModState::ENABLED);
 }
 
+void HackManager::disable_mod_without_notify(std::string const& name) {
+  auto result = mods.find(name);
+  if (result == mods.end()) {
+    return;
+  }
+  result->second->set_state_no_notify(ModState::DISABLED);
+}
+
+void HackManager::enable_mod_without_notify(std::string const& name) {
+  auto result = mods.find(name);
+  if (result == mods.end()) {
+    return;
+  }
+  result->second->set_state_no_notify(ModState::ENABLED);
+}
+
 void HackManager::set_mod_enabled(std::string const& name, bool enabled) {
   if (enabled) {
     enable_mod(name);
@@ -289,36 +312,13 @@ void HackManager::reset_mod(std::string const &name) {
   result->second->reset_mod();
 }
 
-void HackManager::save_mod_states() {
-  for (auto& mod : mods) {
-    mod_state_backup[mod.first] = mod.second->mod_state();
-  }
-}
-
-void HackManager::restore_mod_states() {
-  for (auto& mod : mods) {
-    auto result = mod_state_backup.find(mod.first);
-    if (result == mod_state_backup.end()) {
-      continue;
-    }
-    if (mod.second->is_initialized()) {
-      mod.second->set_state(result->second);
-    }
-  }
-}
-
-void HackManager::revert_all_code_changes() {
-  for (auto& mod : mods) {
-    if (mod.second->is_initialized()) {
-      mod.second->set_state(ModState::DISABLED);
-      mod.second->apply_instruction_changes();
-    }
-  }
-}
-
 void HackManager::shutdown() {
+  // HACK: Called from place that does not provide
+  Core::CPUThreadGuard guard(Core::System::GetInstance());
   for (auto& mod : mods) {
+    mod.second->set_temporary_cpu_guard(&guard);
     mod.second->reset_mod();
+    mod.second->set_temporary_cpu_guard(nullptr);
   }
   last_game = Game::INVALID_GAME;
   last_region = Region::INVALID_REGION;

@@ -42,50 +42,6 @@ static u32 invulnerability_msg_time;
 static u32 cutscene_msg_time;
 static u32 scandash_msg_time;
 
-u8 read8(u32 addr) {
-  return PowerPC::HostRead_U8(addr);
-}
-
-u16 read16(u32 addr) {
-  return PowerPC::HostRead_U16(addr);
-}
-
-u32 read32(u32 addr) {
-  return PowerPC::HostRead_U32(addr);
-}
-
-u32 readi(u32 addr) {
-  return PowerPC::HostRead_Instruction(addr);
-}
-
-u64 read64(u32 addr) {
-  return PowerPC::HostRead_U64(addr);
-}
-
-float readf32(u32 addr) {
-  return Common::BitCast<float>(read32(addr));
-}
-
-void write8(u8 var, u32 addr) {
-  PowerPC::HostWrite_U8(var, addr);
-}
-
-void write16(u16 var, u32 addr) {
-  PowerPC::HostWrite_U16(var, addr);
-}
-
-void write32(u32 var, u32 addr) {
-  PowerPC::HostWrite_U32(var, addr);
-}
-
-void write64(u64 var, u32 addr) {
-  PowerPC::HostWrite_U64(var, addr);
-}
-
-void writef32(float var, u32 addr) {
-  PowerPC::HostWrite_F32(var, addr);
-}
-
 void set_beam_owned(int index, bool owned) {
   beam_owned[index] = owned;
 }
@@ -97,11 +53,6 @@ void set_visor_owned(int index, bool owned) {
 void set_cursor_pos(float x, float y) {
   cursor_x = x;
   cursor_y = y;
-}
-
-void write_invalidate(u32 address, u32 value) {
-  write32(value, address);
-  PowerPC::ScheduleInvalidateCacheThreadSafe(address);
 }
 
 std::tuple<int, int> get_visor_switch(std::array<std::tuple<int, int>, 4> const& visors, bool combat_visor) {
@@ -252,17 +203,17 @@ void DevInfoMatrix(const char* name, const Transform& t)
     "\n   %.3f    %.3f    %.3f    %.3f"
     "\n   %.3f    %.3f    %.3f    %.3f";
 
-  u32 bufsize = snprintf(NULL, 0, format, 
-    t.m[0][0], t.m[0][1], t.m[0][2], t.m[0][3], 
-    t.m[1][0], t.m[1][1], t.m[1][2], t.m[1][3], 
+  u32 bufsize = snprintf(NULL, 0, format,
+    t.m[0][0], t.m[0][1], t.m[0][2], t.m[0][3],
+    t.m[1][0], t.m[1][1], t.m[1][2], t.m[1][3],
     t.m[2][0], t.m[2][1], t.m[2][2], t.m[2][3]);
 
   std::vector<char> buf;
   buf.resize(bufsize + 1);
 
   snprintf(buf.data(), bufsize + 1, format,
-    t.m[0][0], t.m[0][1], t.m[0][2], t.m[0][3], 
-    t.m[1][0], t.m[1][1], t.m[1][2], t.m[1][3], 
+    t.m[0][0], t.m[0][1], t.m[0][2], t.m[0][3],
+    t.m[1][0], t.m[1][1], t.m[1][2], t.m[1][3],
     t.m[2][0], t.m[2][1], t.m[2][2], t.m[2][3]);
 
   ss << name << ":" << buf.data() << std::endl;
@@ -310,10 +261,10 @@ static AspectMode get_aspect_mode() {
   return Config::Get(Config::GFX_WIDESCREEN_HACK) ? AspectMode::Stretch : AspectMode::AnalogWide;
 }
 
-static void handle_wiimote_IR(u32 x_address, u32 y_address, Region region, float half_width, float half_height, AspectMode mode, float aspect_step) {
+static void handle_wiimote_IR(Core::CPUThreadGuard const& guard, u32 x_address, u32 y_address, Region region, float half_width, float half_height, AspectMode mode, float aspect_step) {
   constexpr float kInternalWidth = 640.f;
-  const float cur_width = g_renderer->GetBackbufferWidth();
-  const float cur_height = g_renderer->GetBackbufferHeight(); 
+  const float cur_width = g_presenter->GetBackbufferWidth();
+  const float cur_height = g_presenter->GetBackbufferHeight();
   float unstretched_w = kMetroidAr > (cur_width / cur_height) ? cur_width : cur_height * kMetroidAr;
   if (region == Region::PAL) {
     unstretched_w *= kPalStretchMultiplier;
@@ -351,23 +302,23 @@ static void handle_wiimote_IR(u32 x_address, u32 y_address, Region region, float
   cursor_x = std::clamp(cursor_x, -half_width, half_width);
   cursor_y = std::clamp(cursor_y, -half_height, half_height);
 
-  writef32(cursor_x, x_address);
-  writef32(cursor_y, y_address);
+  PowerPC::MMU::HostWrite_F32(guard, cursor_x, x_address);
+  PowerPC::MMU::HostWrite_F32(guard, cursor_y, y_address);
 }
 
-void handle_cursor(u32 x_address, u32 y_address, Region region) {
+void handle_cursor(Core::CPUThreadGuard const& guard, u32 x_address, u32 y_address, Region region) {
   const AspectMode aspect_mode = get_aspect_mode();
   if (aspect_mode == AspectMode::Stretch) {
-    const float cur_width = g_renderer->GetBackbufferWidth();
-    const float cur_height = g_renderer->GetBackbufferHeight();
+    const float cur_width = g_presenter->GetBackbufferWidth();
+    const float cur_height = g_presenter->GetBackbufferHeight();
     const float render_aspect = cur_width / cur_height;
-    handle_wiimote_IR(x_address, y_address, region, (region == Region::PAL ? kPalHalfHRange : kNtscHalfHRange), kMenuHalfVRange, AspectMode::AnalogWide, render_aspect);
+    handle_wiimote_IR(guard, x_address, y_address, region, (region == Region::PAL ? kPalHalfHRange : kNtscHalfHRange), kMenuHalfVRange, AspectMode::AnalogWide, render_aspect);
   } else {
-    handle_wiimote_IR(x_address, y_address, region, (region == Region::PAL ? kPalHalfHRange : kNtscHalfHRange), kMenuHalfVRange, aspect_mode, kMetroidAr);
+    handle_wiimote_IR(guard, x_address, y_address, region, (region == Region::PAL ? kPalHalfHRange : kNtscHalfHRange), kMenuHalfVRange, aspect_mode, kMetroidAr);
   }
 }
 
-void handle_reticle(u32 x_address, u32 y_address, Region region, float fov) {
+void handle_reticle(Core::CPUThreadGuard const& guard, u32 x_address, u32 y_address, Region region, float fov) {
   constexpr float kDegToRad = 3.141592654f / 180.f;
   constexpr float kTan30 = 0.57735026918962576450914878050196f;
 
@@ -387,6 +338,6 @@ void handle_reticle(u32 x_address, u32 y_address, Region region, float fov) {
     break;
   }
 
-  handle_wiimote_IR(x_address, y_address, region, base_cursor_range_w, base_cursor_range_h, aspect_mode, kMetroidAr);
+  handle_wiimote_IR(guard, x_address, y_address, region, base_cursor_range_w, base_cursor_range_h, aspect_mode, kMetroidAr);
 }
 }  // namespace prime

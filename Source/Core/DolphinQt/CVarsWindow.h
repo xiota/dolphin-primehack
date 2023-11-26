@@ -37,8 +37,8 @@ public:
   prime::CVar* get_var(int row) {
     return &cvar_list[row];
   }
-  std::vector<prime::CVar> const& get_var_list() { return cvar_list; } 
-  void update_memread();
+  std::vector<prime::CVar> const& get_var_list() { return cvar_list; }
+  void update_cvar_cache();
 
 private:
   std::vector<prime::CVar> cvar_list;

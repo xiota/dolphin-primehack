@@ -1,10 +1,14 @@
 #pragma once
 
-#include <optional>
+#include <cstdint>
 #include <map>
+#include <optional>
+#include <variant>
+
 #include "Core/PrimeHack/PrimeMod.h"
 
 namespace prime {
+using CVarVal = std::variant<uint8_t, uint16_t, uint32_t, uint64_t, float, double, bool>;
 enum class CVarType {
   INT8, INT16, INT32, INT64, FLOAT32, FLOAT64, BOOLEAN
 };
@@ -12,6 +16,7 @@ struct CVar {
   std::string name;
   u32 addr;
   CVarType type;
+  CVarVal value;
 
   CVar() = default;
   CVar(std::string&& name, u32 addr, CVarType type) : name(std::forward<std::string>(name)), addr(addr), type(type) {}
@@ -25,9 +30,8 @@ public:
   void on_reset() override { clear_active_mod(); }
 
   void get_cvarlist(std::vector<CVar>& vars_out);
-  bool write_cvar(std::string const& name, void* data);
-  bool get_cvar_val(std::string const& name, void* data_out, size_t out_sz);
-  CVar* get_cvar(std::string const& name);
+  bool write_cvar_request(std::string const& name, CVarVal data);
+  bool get_cvar_val(std::string const& name, CVarVal& data_out);
   void load_presets(std::string const& path);
 
 private:
@@ -60,7 +64,7 @@ private:
   std::map<std::string, CVar> cvar_map;
   u32 debug_output_addr = 0;
   LoadState load_state = LoadState::NOT_LOADED;
-  
+
   void update_bat_regs();
   void parse_and_load_modfile(std::string const& path);
 
@@ -74,7 +78,7 @@ private:
   static std::optional<cleanup_unresolved> parse_cleanup(std::string const& str);
   static std::optional<std::string> parse_elfpath(std::string const& rel_file, std::string const& str);
 
-  static bool load_elf(std::string const& path);
+  bool load_elf(std::string const& path);
 
   // Sets up a callgate entry, returns the address in the callgate table
   // TODO: multiple hooks to same target --> same callgate location!
@@ -86,6 +90,8 @@ private:
   void create_trampoline_callgated(u32 hook_target, u32 func_start);
 
   void clear_active_mod();
+
+  void write_cvar_val(CVarVal val, u32 addr);
 
   // void clear_modinfo_from_ram();
   // void write_modinfo_to_ram();

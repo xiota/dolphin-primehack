@@ -1753,8 +1753,8 @@ RcTcacheEntry TextureCacheBase::CreateTextureEntry(
     const bool decode_on_gpu =
         g_ActiveConfig.UseGPUTextureDecoding() &&
         !(texture_info.IsFromTmem() && texture_info.GetTextureFormat() == TextureFormat::RGBA8) &&
-        base_hash != PRIME1_PIXEL_HASH &&
-        base_hash != PRIME2_PIXEL_HASH;
+        creation_info.base_hash != PRIME1_PIXEL_HASH &&
+        creation_info.base_hash != PRIME2_PIXEL_HASH;
 
     ArbitraryMipmapDetector arbitrary_mip_detector;
 
@@ -1801,11 +1801,11 @@ RcTcacheEntry TextureCacheBase::CreateTextureEntry(
                                        expanded_height);
       }
 
-      if (base_hash == PRIME2_PIXEL_HASH)
+      if (creation_info.base_hash == PRIME2_PIXEL_HASH)
       {
         ClearBufferCorners(dst_buffer, expanded_width, expanded_height);
       }
-      else if (base_hash == PRIME1_PIXEL_HASH)
+      else if (creation_info.base_hash == PRIME1_PIXEL_HASH)
       {
         memset(dst_buffer, 0, decoded_texture_size);
       }
@@ -1839,11 +1839,11 @@ RcTcacheEntry TextureCacheBase::CreateTextureEntry(
                           mip_level->GetExpandedHeight(), texture_info.GetTextureFormat(),
                           texture_info.GetTlutAddress(), texture_info.GetTlutFormat());
 
-        if (base_hash == PRIME2_PIXEL_HASH)
+        if (creation_info.base_hash == PRIME2_PIXEL_HASH)
         {
           ClearBufferCorners(dst_buffer, mip_level->GetExpandedWidth(), mip_level->GetExpandedHeight());
         }
-        else if (base_hash == PRIME1_PIXEL_HASH)
+        else if (creation_info.base_hash == PRIME1_PIXEL_HASH)
         {
           memset(dst_buffer, 0, decoded_mip_size);
         }

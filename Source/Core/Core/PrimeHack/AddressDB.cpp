@@ -1,4 +1,6 @@
 #include "Core/PrimeHack/AddressDB.h"
+
+#include "Core/PowerPC/MMU.h"
 #include "Core/PrimeHack/PrimeUtils.h"
 
 namespace prime {
@@ -12,7 +14,7 @@ AddressDB::AddressDB() {
   addr_mapping.emplace(Game::PRIME_3_STANDALONE, var_map{});
   addr_mapping.emplace(Game::PRIME_1_GCN_R1, var_map{});
   addr_mapping.emplace(Game::PRIME_1_GCN_R2, var_map{});
-  
+
   dyn_addr_mapping.emplace(Game::PRIME_1, dyn_var_map{});
   dyn_addr_mapping.emplace(Game::PRIME_2, dyn_var_map{});
   dyn_addr_mapping.emplace(Game::PRIME_3, dyn_var_map{});
@@ -75,7 +77,7 @@ u32 AddressDB::lookup_address(Game game, Region region, std::string_view name) c
   }
 }
 
-u32 AddressDB::lookup_dynamic_address(Game game, Region region, std::string_view name) const {
+u32 AddressDB::lookup_dynamic_address(Core::CPUThreadGuard const& guard, Game game, Region region, std::string_view name) const {
   auto r1 = dyn_addr_mapping.find(game);
   if (r1 == dyn_addr_mapping.end()) {
     return 0;
@@ -88,14 +90,14 @@ u32 AddressDB::lookup_dynamic_address(Game game, Region region, std::string_view
   }
   u32 result_addr;
   if (r2->second.source_var_dynamic) {
-    result_addr = lookup_dynamic_address(game, region, r2->second.source_var);
+    result_addr = lookup_dynamic_address(guard, game, region, r2->second.source_var);
     if (result_addr == 0) {
       return 0;
     }
   } else {
     result_addr = lookup_address(game, region, r2->second.source_var);
     if (result_addr == 0) {
-      result_addr = lookup_dynamic_address(game, region, r2->second.source_var);
+      result_addr = lookup_dynamic_address(guard, game, region, r2->second.source_var);
       if (result_addr == 0) {
         return 0;
       }
@@ -118,7 +120,7 @@ u32 AddressDB::lookup_dynamic_address(Game game, Region region, std::string_view
     default:
       return 0;
     }
-    result_addr = read32(result_addr + offset);
+    result_addr = PowerPC::MMU::HostRead_U32(guard, result_addr + offset);
     if (!mem_check(result_addr)) {
       return 0;
     }

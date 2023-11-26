@@ -332,12 +332,12 @@ Wiimote::Wiimote(const unsigned int index) : m_index(index), m_bt_device_index(i
   {
     const std::string& ui_name = prime_button;
     m_primehack_beams->controls.emplace_back(
-        new ControllerEmu::Input(ControllerEmu::DoNotTranslate, prime_button, ui_name));
+        new ControllerEmu::Input(Translatability::DoNotTranslate, prime_button, ui_name));
   }
   m_primehack_beams->controls.emplace_back(
-    new ControllerEmu::Input(ControllerEmu::DoNotTranslate, _trans("Next Beam"), "Next Beam"));
+    new ControllerEmu::Input(Translatability::DoNotTranslate, _trans("Next Beam"), "Next Beam"));
   m_primehack_beams->controls.emplace_back(
-    new ControllerEmu::Input(ControllerEmu::DoNotTranslate, _trans("Previous Beam"), "Previous Beam"));
+    new ControllerEmu::Input(Translatability::DoNotTranslate, _trans("Previous Beam"), "Previous Beam"));
 
   m_primehack_beams->AddSetting(
     &m_primehack_beam_menu, {"Enable Beam Menu", nullptr, nullptr, _trans("Enable Beam Menu")}, false);
@@ -347,13 +347,13 @@ Wiimote::Wiimote(const unsigned int index) : m_index(index), m_bt_device_index(i
   {
     const std::string& ui_name = prime_button;
     m_primehack_visors->controls.emplace_back(
-        new ControllerEmu::Input(ControllerEmu::DoNotTranslate, prime_button, ui_name));
+        new ControllerEmu::Input(Translatability::DoNotTranslate, prime_button, ui_name));
   }
 
   m_primehack_visors->controls.emplace_back(
-    new ControllerEmu::Input(ControllerEmu::DoNotTranslate, _trans("Next Visor"), "Next Visor"));
+    new ControllerEmu::Input(Translatability::DoNotTranslate, _trans("Next Visor"), "Next Visor"));
   m_primehack_visors->controls.emplace_back(
-    new ControllerEmu::Input(ControllerEmu::DoNotTranslate, _trans("Previous Visor"), "Previous Visor"));
+    new ControllerEmu::Input(Translatability::DoNotTranslate, _trans("Previous Visor"), "Previous Visor"));
 
   m_primehack_visors->AddSetting(
     &m_primehack_visor_menu, {"Enable Visor Menu", nullptr, nullptr, _trans("Enable Visor Menu")}, false);
@@ -392,17 +392,17 @@ Wiimote::Wiimote(const unsigned int index) : m_index(index), m_bt_device_index(i
 
   m_primehack_stick->AddSetting(&m_primehack_horizontal_sensitivity, {"Horizontal Sensitivity", nullptr, nullptr, _trans("Horizontal Sensitivity")}, 45, 1, 100);
   m_primehack_stick->AddSetting(&m_primehack_vertical_sensitivity, {"Vertical Sensitivity", nullptr, nullptr, _trans("Vertical Sensitivity")}, 35, 1, 100);
-  m_primehack_stick->AddInput(ControllerEmu::Translatability::Translate, _trans("Reset Camera Pitch"));
+  m_primehack_stick->AddInput(Translatability::Translate, _trans("Reset Camera Pitch"));
 
   groups.emplace_back(m_primehack_modes = new ControllerEmu::PrimeHackModes(_trans("PrimeHack")));
 
   groups.emplace_back(m_primehack_misc = new ControllerEmu::ControlGroup(_trans("PrimeHack")));
 
   m_primehack_misc->controls.emplace_back(
-      new ControllerEmu::Input(ControllerEmu::DoNotTranslate, "Spring Ball", "Spring Ball"));
+      new ControllerEmu::Input(Translatability::DoNotTranslate, "Spring Ball", "Spring Ball"));
 
   m_primehack_misc->controls.emplace_back(
-      new ControllerEmu::Input(ControllerEmu::DoNotTranslate, "Grapple Lasso", "Grapple Lasso"));
+      new ControllerEmu::Input(Translatability::DoNotTranslate, "Grapple Lasso", "Grapple Lasso"));
 
   m_primehack_misc->AddSetting(
     &m_primehack_tapping_grapple, {"Tap Grapple Repeatedly To Pull", nullptr, nullptr, _trans("Tap Grapple Repeatedly To Pull")}, false);

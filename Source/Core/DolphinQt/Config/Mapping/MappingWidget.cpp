@@ -145,7 +145,7 @@ QGroupBox* MappingWidget::CreateGroupBox(const QString& name, ControllerEmu::Con
 
     button->setMinimumWidth(100);
     button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    const bool translate = control->translate == ControllerEmu::Translate;
+    const bool translate = control->translate == ControllerEmu::Translatability::Translate;
     const QString translated_name =
         translate ? tr(control->ui_name.c_str()) : QString::fromStdString(control->ui_name);
     if (control->display_alt) {

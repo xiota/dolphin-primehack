@@ -6,6 +6,7 @@
 #include <tuple>
 #include <vector>
 
+#include "Core/Core.h"
 #include "Core/PowerPC/PowerPC.h"
 
 namespace prime {
@@ -80,20 +81,39 @@ public:
   bool is_initialized() const { return initialized; }
   void mark_initialized() { initialized = true; }
   void reset_mod();
-  
+
   ModState mod_state() const { return state; }
   void set_state(ModState new_state);
+  void set_state_no_notify(ModState new_state);
   void set_code_group_state(const std::string& group_name, ModState new_state);
+
+  void set_temporary_cpu_guard(Core::CPUThreadGuard const* guard) { active_guard = guard; }
 
   static void set_address_database(const AddressDB* db_ptr) { addr_db = db_ptr; }
   static void set_hack_manager(const HackManager* mgr_ptr) { hack_mgr = mgr_ptr; }
 
 protected:
+  mutable Core::CPUThreadGuard const* active_guard = nullptr;
+
   inline static const AddressDB* addr_db = nullptr;
   inline static const HackManager* hack_mgr = nullptr;
 
   static u32 lookup_address(std::string_view name);
-  static u32 lookup_dynamic_address(std::string_view name);
+  u32 lookup_dynamic_address(std::string_view name) const;
+
+  // Because of the new lovely restrictions to memory writes, these now have to be given a CPUThreadGuard
+  u8 read8(u32 addr) const;
+  u16 read16(u32 addr) const;
+  u32 read32(u32 addr) const;
+  u32 readi(u32 addr) const;
+  u64 read64(u32 addr) const;
+  float readf32(u32 addr) const;
+  void write8(u8 var, u32 addr) const;
+  void write16(u16 var, u32 addr) const;
+  void write32(u32 var, u32 addr) const;
+  void write64(u64 var, u32 addr) const;
+  void writef32(float var, u32 addr) const;
+  void writef64(double var, u32 addr) const;
 
 private:
   using group_change = std::tuple<std::vector<size_t>, ModState>;

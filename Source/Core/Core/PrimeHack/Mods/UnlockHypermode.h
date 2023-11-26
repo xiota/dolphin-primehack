@@ -1,7 +1,9 @@
 #pragma once
 
+#include "Core/PowerPC/PowerPC.h"
 #include "Core/PrimeHack/PrimeMod.h"
 #include "Core/PrimeHack/PrimeUtils.h"
+#include "Core/System.h"
 
 namespace prime {
   class UnlockHypermode : public PrimeMod {
@@ -11,7 +13,7 @@ namespace prime {
         return;
       }
 
-      u32 base = read32(GPR(13) - r13_offset);
+      u32 base = read32(Core::System::GetInstance().GetPPCState().gpr[13] - r13_offset);
       write8(1, base + 0x68);
       write8(1, base + 0xa0);
       write8(1, base + 0xd8);

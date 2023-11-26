@@ -8,7 +8,6 @@
 #include "Common/CommonPaths.h"
 #include "Common/FileSearch.h"
 #include "Common/FileUtil.h"
-#include "Common/IniFile.h"
 #include "Common/StringUtil.h"
 
 #include "Core/PrimeHack/PrimeUtils.h"
@@ -57,7 +56,6 @@ namespace prime {
 namespace {
 float sensitivity;
 float cursor_sensitivity;
-float camera_fov;
 
 bool inverted_x = false;
 bool inverted_y = false;
@@ -105,13 +103,13 @@ void InitializeHack() {
   hack_mgr.add_mod("motd", std::make_unique<Motd>());
   hack_mgr.add_mod("strg_patch", std::make_unique<STRGPatch>());
 
-  hack_mgr.enable_mod("skip_cutscene");
-  hack_mgr.enable_mod("fov_modifier");
-  hack_mgr.enable_mod("bloom_modifier");
-  hack_mgr.enable_mod("bloom_intensity");
-  hack_mgr.enable_mod("map_controller");
-  hack_mgr.enable_mod("motd");
-  hack_mgr.enable_mod("strg_patch");
+  hack_mgr.enable_mod_without_notify("skip_cutscene");
+  hack_mgr.enable_mod_without_notify("fov_modifier");
+  hack_mgr.enable_mod_without_notify("bloom_modifier");
+  hack_mgr.enable_mod_without_notify("bloom_intensity");
+  hack_mgr.enable_mod_without_notify("map_controller");
+  hack_mgr.enable_mod_without_notify("motd");
+  hack_mgr.enable_mod_without_notify("strg_patch");
 
   // Enable no PrimeHack control mods
   if (!Config::Get(Config::PRIMEHACK_ENABLE))
@@ -119,10 +117,10 @@ void InitializeHack() {
     return;
   }
 
-  hack_mgr.enable_mod("fps_controls");
-  hack_mgr.enable_mod("springball_button");
-  hack_mgr.enable_mod("context_sensitive_controls");
-  hack_mgr.enable_mod("elf_mod_loader");
+  hack_mgr.enable_mod_without_notify("fps_controls");
+  hack_mgr.enable_mod_without_notify("springball_button");
+  hack_mgr.enable_mod_without_notify("context_sensitive_controls");
+  hack_mgr.enable_mod_without_notify("elf_mod_loader");
 }
 
 bool CheckBeamCtl(int beam_num) {
@@ -286,7 +284,7 @@ std::pair<std::string, std::string> GetProfiles() {
 
 void ChangeControllerProfileAlt(std::string profile_path)
 {
-  IniFile ini;
+  Common::IniFile ini;
   ini.Load(profile_path);
 
   std::string profile_name = ini.GetSection("Wiimote1") ? "Wiimote1" : "Profile";

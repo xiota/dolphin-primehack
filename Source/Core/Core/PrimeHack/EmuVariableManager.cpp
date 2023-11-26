@@ -1,55 +1,57 @@
 #include "Core/PrimeHack/EmuVariableManager.h"
+
+#include "Core/PowerPC/MMU.h"
 #include "Core/PrimeHack/PrimeUtils.h"
 
 #include <cassert>
 
 namespace prime {
-  constexpr u32 base_address = 0x80004164; 
+  constexpr u32 base_address = 0x80004164;
   constexpr int max_variables = 45;
 
-  void EmuVariableManager::set_variable(const std::string& variable, u8 value) {
+  void EmuVariableManager::set_variable(Core::CPUThreadGuard const& guard, const std::string& variable, u8 value) {
     auto result = variables_list.find(variable);
     if (result == variables_list.end()) {
       return;
     }
 
-    write8(value, result->second);
+    PowerPC::MMU::HostWrite_U8(guard, value, result->second);
   }
 
-  void EmuVariableManager::set_variable(const std::string& variable, u32 value) {
+  void EmuVariableManager::set_variable(Core::CPUThreadGuard const& guard, const std::string& variable, u32 value) {
     auto result = variables_list.find(variable);
     if (result == variables_list.end()) {
       return;
     }
 
-    write32(value, result->second);
+    PowerPC::MMU::HostWrite_U32(guard, value, result->second);
   }
 
-  void EmuVariableManager::set_variable(const std::string& variable, float value) {
+  void EmuVariableManager::set_variable(Core::CPUThreadGuard const& guard, const std::string& variable, float value) {
     auto result = variables_list.find(variable);
     if (result == variables_list.end()) {
       return;
     }
 
-    writef32(value, result->second);
+    PowerPC::MMU::HostWrite_F32(guard, value, result->second);
   }
 
-  u32 EmuVariableManager::get_uint(const std::string& variable) const {
+  u32 EmuVariableManager::get_uint(Core::CPUThreadGuard const& guard, const std::string& variable) const {
     auto result = variables_list.find(variable);
     if (result == variables_list.end()) {
       return 0;
     }
 
-    return read32(result->second);
+    return PowerPC::MMU::HostRead_U32(guard, result->second);
   }
 
-  float EmuVariableManager::get_float(const std::string& variable) const {
+  float EmuVariableManager::get_float(Core::CPUThreadGuard const& guard, const std::string& variable) const {
     auto result = variables_list.find(variable);
     if (result == variables_list.end()) {
       return 0;
     }
 
-    return readf32(result->second);
+    return PowerPC::MMU::HostRead_F32(guard, result->second);
   }
 
   u32 EmuVariableManager::get_address(const std::string& variable) const {
