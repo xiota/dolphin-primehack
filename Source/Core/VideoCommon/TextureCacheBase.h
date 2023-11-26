@@ -307,6 +307,8 @@ public:
   static bool AllCopyFilterCoefsNeeded(const std::array<u32, 3>& coefficients);
   static bool CopyFilterCanOverflow(const std::array<u32, 3>& coefficients);
 
+  void ClearBufferCorners(u8* buffer, u32 width, u32 height);
+
 protected:
   // Decodes the specified data to the GPU texture specified by entry.
   // Returns false if the configuration is not supported.
