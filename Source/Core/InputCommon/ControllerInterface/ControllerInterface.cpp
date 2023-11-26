@@ -8,6 +8,8 @@
 #include "Common/Assert.h"
 #include "Common/Logging/Log.h"
 #include "Core/HW/WiimoteReal/WiimoteReal.h"
+#include "Core/PrimeHack/HackConfig.h"
+#include "InputCommon/GenericMouse.h"
 
 #ifdef CIFACE_USE_WIN32
 #include "InputCommon/ControllerInterface/Win32/Win32.h"
@@ -157,12 +159,15 @@ void ControllerInterface::RefreshDevices(RefreshReason reason)
   // do it async, to not risk the emulated controllers default config loading not finding a default
   // device.
 
+  // An empty mouse class for when no platform specific one exists.
+  prime::g_mouse_input = new prime::NullMouse();
+
 #ifdef CIFACE_USE_WIN32
-  ciface::Win32::PopulateDevices(m_wsi.render_window);
+  ciface::Win32::PopulateDevices(m_wsi.render_surface);
 #endif
 #ifdef CIFACE_USE_XLIB
   if (m_wsi.type == WindowSystemType::X11)
-    ciface::XInput2::PopulateDevices(m_wsi.render_window);
+    ciface::XInput2::PopulateDevices(m_wsi.render_surface);
 #endif
 #ifdef CIFACE_USE_OSX
   if (m_wsi.type == WindowSystemType::MacOS)
@@ -179,6 +184,8 @@ void ControllerInterface::RefreshDevices(RefreshReason reason)
 
   for (auto& backend : m_input_backends)
     backend->PopulateDevices();
+
+  prime::InitializeHack();
 
   WiimoteReal::PopulateDevices();
 
