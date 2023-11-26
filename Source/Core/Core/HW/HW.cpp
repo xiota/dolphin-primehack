@@ -29,6 +29,8 @@
 #include "Core/State.h"
 #include "Core/System.h"
 
+#include "Core/PrimeHack/HackConfig.h"
+
 namespace HW
 {
 void Init(Core::System& system, const Sram* override_sram)
@@ -63,6 +65,8 @@ void Init(Core::System& system, const Sram* override_sram)
 
 void Shutdown(Core::System& system)
 {
+  prime::GetHackManager()->shutdown();
+
   // IOS should always be shut down regardless of bWii because it can be running in GC mode (MIOS).
   IOS::HLE::Shutdown();  // Depends on Memory
   IOS::Shutdown();

@@ -9,6 +9,8 @@
 #include "Common/Common.h"
 #include "Common/CommonTypes.h"
 
+#include <tuple>
+
 class InputConfig;
 class PointerWrap;
 
@@ -49,6 +51,7 @@ enum class WiimoteSource
   None = 0,
   Emulated = 1,
   Real = 2,
+  Metroid = 3,
 };
 
 namespace WiimoteCommon
@@ -94,6 +97,33 @@ ControllerEmu::ControlGroup* GetDrawsomeTabletGroup(int number,
                                                     WiimoteEmu::DrawsomeTabletGroup group);
 ControllerEmu::ControlGroup* GetTaTaConGroup(int number, WiimoteEmu::TaTaConGroup group);
 ControllerEmu::ControlGroup* GetShinkansenGroup(int number, WiimoteEmu::ShinkansenGroup group);
+
+void ChangeUIPrimeHack(int number, bool useMetroidUI);
+
+bool CheckVisor(int visor_count);
+bool CheckBeam(int beam_count);
+bool CheckBeamScroll(bool direction);
+bool CheckVisorScroll(bool direction);
+bool CheckSpringBall();
+bool CheckImprovedMotions();
+bool CheckForward();
+bool CheckBack();
+bool CheckLeft();
+bool CheckRight();
+bool CheckJump();
+
+bool CheckGrapple();
+bool UseGrappleTapping();
+bool GrappleCtlBound();
+bool PrimeUseController();
+
+bool PrimeUseController();
+bool CheckPitchRecentre();
+
+std::tuple<double, double> GetPrimeStickXY();
+std::tuple<bool, bool> GetBVMenuOptions();
+
+std::tuple<double, double, bool, bool, bool, bool, bool> PrimeSettings();
 }  // namespace Wiimote
 
 namespace WiimoteReal
