@@ -18,6 +18,7 @@
 #include "DolphinQt/Config/Graphics/EnhancementsWidget.h"
 #include "DolphinQt/Config/Graphics/GeneralWidget.h"
 #include "DolphinQt/Config/Graphics/HacksWidget.h"
+#include "DolphinQt/Config/Graphics/PrimeWidget.h"
 #include "DolphinQt/MainWindow.h"
 #include "DolphinQt/QtUtils/WrapInScrollArea.h"
 
@@ -49,6 +50,7 @@ void GraphicsWindow::CreateMainLayout()
   auto* const enhancements_widget = new EnhancementsWidget(this);
   auto* const hacks_widget = new HacksWidget(this);
   auto* const advanced_widget = new AdvancedWidget(this);
+  auto* const prime_widget = new PrimeWidget(this);
 
   connect(general_widget, &GeneralWidget::BackendChanged, this, &GraphicsWindow::OnBackendChanged);
 
@@ -56,11 +58,13 @@ void GraphicsWindow::CreateMainLayout()
   QWidget* const wrapped_enhancements = GetWrappedWidget(enhancements_widget, this, 50, 100);
   QWidget* const wrapped_hacks = GetWrappedWidget(hacks_widget, this, 50, 100);
   QWidget* const wrapped_advanced = GetWrappedWidget(advanced_widget, this, 50, 100);
+  QWidget* const wrapped_prime = GetWrappedWidget(prime_widget, this, 50, 305);
 
   tab_widget->addTab(wrapped_general, tr("General"));
   tab_widget->addTab(wrapped_enhancements, tr("Enhancements"));
   tab_widget->addTab(wrapped_hacks, tr("Hacks"));
   tab_widget->addTab(wrapped_advanced, tr("Advanced"));
+  tab_widget->addTab(wrapped_prime, tr("PrimeHack GFX"));
 
   setLayout(main_layout);
 }

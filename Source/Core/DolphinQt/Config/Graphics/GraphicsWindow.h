@@ -9,6 +9,7 @@
 class AdvancedWidget;
 class EnhancementsWidget;
 class HacksWidget;
+class PrimeWidget;
 class GeneralWidget;
 class MainWindow;
 class QLabel;
