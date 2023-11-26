@@ -295,6 +295,10 @@ void PowerPCManager::Init(CPUCore cpu_core)
     m_breakpoints.ClearAllTemporary();
 }
 
+void vmcall_noop(PowerPCState& ppc_state, u32 param) {
+  WARN_LOG_FMT(POWERPC, "Executed unhandled vmcall, PC={:#x} VMFP={}", ppc_state.pc, param);
+}
+
 void PowerPCManager::Reset()
 {
   m_ppc_state.pagetable_base = 0;
@@ -304,6 +308,10 @@ void PowerPCManager::Reset()
   ResetRegisters();
   m_ppc_state.iCache.Reset();
   m_ppc_state.dCache.Reset();
+
+  for (vm_call& fn : m_ppc_state.vmcall_table) {
+    fn = vmcall_noop;
+  }
 }
 
 void PowerPCManager::ScheduleInvalidateCacheThreadSafe(u32 address)
@@ -328,6 +336,24 @@ void PowerPCManager::Shutdown()
   m_system.GetJitInterface().Shutdown();
   m_system.GetInterpreter().Shutdown();
   m_cpu_core_base = nullptr;
+}
+
+void PowerPCManager::RegisterVmcallWithIndex(int index, vm_call pfn) {
+  m_ppc_state.vmcall_table[index] = pfn;
+}
+
+int PowerPCManager::RegisterVmcall(vm_call pfn) {
+  for (int i = 0; i < ppcState.vmcall_table.size(); i++) {
+    if (m_ppc_state.vmcall_table[i] == vmcall_noop) {
+      m_ppc_state.vmcall_table[i] = pfn;
+      return i;
+    }
+  }
+  return -1;
+}
+
+void PowerPCManager::VmcallDefaultFn(u32 param) {
+  vmcall_noop(param);
 }
 
 CoreMode PowerPCManager::GetMode() const
