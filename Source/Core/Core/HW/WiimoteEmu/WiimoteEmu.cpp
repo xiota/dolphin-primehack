@@ -558,15 +558,8 @@ void Wiimote::UpdateButtonsStatus(const DesiredWiimoteState& target_state)
 {
   m_status.buttons.hex = target_state.buttons.hex & ButtonData::BUTTON_MASK;
 
-  if (using_metroid_ui)
-  {
-    m_buttons->GetState(&m_status.buttons.hex, metroid_button_bitmasks);
-  }
-  else
-  {
-    m_buttons->GetState(&m_status.buttons.hex, button_bitmasks);
-    m_dpad->GetState(&m_status.buttons.hex, IsSideways() ? dpad_sideways_bitmasks : dpad_bitmasks);
-  }
+  m_buttons->GetState(&m_status.buttons.hex, using_metroid_ui ? metroid_button_bitmasks : button_bitmasks);
+  m_dpad->GetState(&m_status.buttons.hex, IsSideways() ? dpad_sideways_bitmasks : dpad_bitmasks);
 }
 
 void Wiimote::BuildDesiredWiimoteState(DesiredWiimoteState* target_state)
@@ -580,7 +573,7 @@ void Wiimote::BuildDesiredWiimoteState(DesiredWiimoteState* target_state)
 
   // Fetch pressed buttons from user input.
   target_state->buttons.hex = 0;
-  m_buttons->GetState(&target_state->buttons.hex, button_bitmasks, m_input_override_function);
+  m_buttons->GetState(&target_state->buttons.hex, using_metroid_ui ? metroid_button_bitmasks : button_bitmasks, m_input_override_function);
   m_dpad->GetState(&target_state->buttons.hex,
                    IsSideways() ? dpad_sideways_bitmasks : dpad_bitmasks,
                    m_input_override_function);
