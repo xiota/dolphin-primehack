@@ -74,7 +74,6 @@ void PrimeMod::set_state(ModState new_state) {
 }
 
 void PrimeMod::set_state_no_notify(ModState new_state) {
-  ModState original = this->state;
   this->state = new_state;
 }
 

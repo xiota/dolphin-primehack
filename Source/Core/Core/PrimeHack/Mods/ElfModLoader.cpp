@@ -245,16 +245,16 @@ void ElfModLoader::load_presets(std::string const& path) {
       case CVarType::INT16:
         var_it->second.value = static_cast<u16>(strtoul(var_val.c_str(), nullptr, 10));
       case CVarType::INT32:
-        var_it->second.value = strtoul(var_val.c_str(), nullptr, 10);
+        var_it->second.value = static_cast<u32>(strtoul(var_val.c_str(), nullptr, 10));
         break;
       case CVarType::INT64:
-        var_it->second.value = strtoull(var_val.c_str(), nullptr, 10);
+        var_it->second.value = static_cast<u64>(strtoull(var_val.c_str(), nullptr, 10));
         break;
       case CVarType::FLOAT32:
-        var_it->second.value = strtof(var_val.c_str(), nullptr);
+        var_it->second.value = static_cast<float>(strtof(var_val.c_str(), nullptr));
         break;
       case CVarType::FLOAT64:
-        var_it->second.value = strtod(var_val.c_str(), nullptr);
+        var_it->second.value = static_cast<double>(strtod(var_val.c_str(), nullptr));
         break;
       }
     }

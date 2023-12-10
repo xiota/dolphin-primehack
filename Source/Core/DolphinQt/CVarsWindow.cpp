@@ -25,7 +25,7 @@ void CVarListModel::get_column_widths(QFont const& font, std::array<int, CVarLis
   for (size_t i = 0; i < width_out.size(); i++) {
     int col_size = 0;
     for (size_t j = 0; j < cvar_list.size(); j++) {
-      auto text = data(index(j, i));
+      auto text = data(index(static_cast<int>(j), static_cast<int>(i)));
 #if QT_VERSION >= 0x050b00
       col_size = std::max(col_size, fm.horizontalAdvance(text.toString()));
 #else
