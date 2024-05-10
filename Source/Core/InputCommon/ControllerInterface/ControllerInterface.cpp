@@ -8,6 +8,8 @@
 #include "Common/Assert.h"
 #include "Common/Logging/Log.h"
 #include "Core/HW/WiimoteReal/WiimoteReal.h"
+#include "Core/PrimeHack/HackConfig.h"
+#include "InputCommon/GenericMouse.h"
 
 #ifdef CIFACE_USE_WIN32
 #include "InputCommon/ControllerInterface/Win32/Win32.h"
@@ -148,6 +150,9 @@ void ControllerInterface::RefreshDevices(RefreshReason reason)
   // Make sure shared_ptr<Device> objects are released before repopulating.
   ClearDevices();
 
+  // An empty mouse class for when no platform specific one exists.
+  prime::g_mouse_input = new prime::NullMouse();
+
   // Some of these calls won't immediately populate devices, but will do it async
   // with their own PlatformPopulateDevices().
   // This means that devices might end up in different order, unless we override their priority.
@@ -159,6 +164,8 @@ void ControllerInterface::RefreshDevices(RefreshReason reason)
 
   for (auto& backend : m_input_backends)
     backend->PopulateDevices();
+
+  prime::InitializeHack();
 
   WiimoteReal::PopulateDevices();
 
