@@ -55,6 +55,7 @@
 #include "VideoCommon/VertexManagerBase.h"
 #include "VideoCommon/VideoCommon.h"
 #include "VideoCommon/VideoConfig.h"
+#include "VideoCommon/PrimePixelErrorTextures.h"
 
 static const u64 TEXHASH_INVALID = 0;
 // Sonic the Fighters (inside Sonic Gems Collection) loops a 64 frames animation
@@ -1719,7 +1720,9 @@ RcTcacheEntry TextureCacheBase::CreateTextureEntry(
     // shader, however.
     const bool decode_on_gpu =
         g_ActiveConfig.UseGPUTextureDecoding() &&
-        !(texture_info.IsFromTmem() && texture_info.GetTextureFormat() == TextureFormat::RGBA8);
+        !(texture_info.IsFromTmem() && texture_info.GetTextureFormat() == TextureFormat::RGBA8) &&
+        creation_info.base_hash != PRIME1_PIXEL_HASH &&
+        creation_info.base_hash != PRIME2_PIXEL_HASH;
 
     ArbitraryMipmapDetector arbitrary_mip_detector;
 
@@ -1766,6 +1769,15 @@ RcTcacheEntry TextureCacheBase::CreateTextureEntry(
                                        expanded_height);
       }
 
+      if (creation_info.base_hash == PRIME2_PIXEL_HASH)
+      {
+        ClearBufferCorners(dst_buffer, expanded_width, expanded_height);
+      }
+      else if (creation_info.base_hash == PRIME1_PIXEL_HASH)
+      {
+        memset(dst_buffer, 0, decoded_texture_size);
+      }
+
       entry->texture->Load(0, width, height, expanded_width, dst_buffer, decoded_texture_size);
 
       arbitrary_mip_detector.AddLevel(width, height, expanded_width, dst_buffer);
@@ -1794,6 +1806,16 @@ RcTcacheEntry TextureCacheBase::CreateTextureEntry(
         TexDecoder_Decode(dst_buffer, mip_level->GetData(), mip_level->GetExpandedWidth(),
                           mip_level->GetExpandedHeight(), texture_info.GetTextureFormat(),
                           texture_info.GetTlutAddress(), texture_info.GetTlutFormat());
+
+        if (creation_info.base_hash == PRIME2_PIXEL_HASH)
+        {
+          ClearBufferCorners(dst_buffer, mip_level->GetExpandedWidth(), mip_level->GetExpandedHeight());
+        }
+        else if (creation_info.base_hash == PRIME1_PIXEL_HASH)
+        {
+          memset(dst_buffer, 0, decoded_mip_size);
+        }
+
         entry->texture->Load(level, mip_level->GetRawWidth(), mip_level->GetRawHeight(),
                              mip_level->GetExpandedWidth(), dst_buffer, decoded_mip_size);
 
@@ -3193,4 +3215,12 @@ TextureCacheBase::TexPoolEntry::TexPoolEntry(std::unique_ptr<AbstractTexture> te
                                              std::unique_ptr<AbstractFramebuffer> fb)
     : texture(std::move(tex)), framebuffer(std::move(fb))
 {
+}
+
+void TextureCacheBase::ClearBufferCorners(u8* buffer, u32 width, u32 height)
+{
+  memset(buffer, 0, 4);
+  memset(buffer + width * 4 - 4, 0, 4);
+  memset(buffer + (width * (height - 1) * 4), 0, 4);
+  memset(buffer + (width * height * 4) - 4, 0, 4);
 }
