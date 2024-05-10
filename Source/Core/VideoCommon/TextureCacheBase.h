@@ -312,6 +312,7 @@ public:
   // Get a new sampler state
   static SamplerState GetSamplerState(u32 index, float custom_tex_scale, bool custom_tex,
                                       bool has_arbitrary_mips);
+  void ClearBufferCorners(u8* buffer, u32 width, u32 height);
 
 protected:
   // Decodes the specified data to the GPU texture specified by entry.
