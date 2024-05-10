@@ -1,3 +1,9 @@
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(input DInputMouseAbsolute.cpp DInputMouseAbsolute.h)
+elseif(X11_FOUND)
+    set(input XInput2Mouse.cpp XInput2Mouse.h)
+endif()
+
 add_library(inputcommon
   DynamicInputTextureManager.cpp
   DynamicInputTextureManager.h
@@ -7,6 +13,8 @@ add_library(inputcommon
   ImageOperations.h
   InputConfig.cpp
   InputConfig.h
+  GenericMouse.cpp
+  ${input}
   InputProfile.cpp
   InputProfile.h
   ControllerEmu/ControllerEmu.cpp
@@ -19,6 +27,10 @@ add_library(inputcommon
   ControllerEmu/Control/Input.h
   ControllerEmu/Control/Output.cpp
   ControllerEmu/Control/Output.h
+	ControllerEmu/ControlGroup/PrimeHackModes.cpp
+  ControllerEmu/ControlGroup/PrimeHackModes.h
+	ControllerEmu/ControlGroup/PrimeHackAltProfile.h
+	ControllerEmu/ControlGroup/PrimeHackAltProfile.cpp
   ControllerEmu/ControlGroup/AnalogStick.cpp
   ControllerEmu/ControlGroup/AnalogStick.h
   ControllerEmu/ControlGroup/Attachments.cpp
@@ -110,6 +122,13 @@ if(WIN32)
   )
 elseif(APPLE)
   target_sources(inputcommon PRIVATE
+    QuartzInputMouse.h
+    QuartzInputMouse.mm
+    ControllerInterface/OSX/OSX.h
+    ControllerInterface/OSX/OSX.mm
+    ControllerInterface/OSX/OSXJoystick.h
+    ControllerInterface/OSX/OSXJoystick.mm
+    ControllerInterface/OSX/RunLoopStopper.h
     ControllerInterface/Quartz/Quartz.h
     ControllerInterface/Quartz/Quartz.mm
     ControllerInterface/Quartz/QuartzKeyboardAndMouse.h

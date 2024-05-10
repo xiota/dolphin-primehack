@@ -51,6 +51,8 @@ enum class GroupType
   IMUGyroscope,
   IMUCursor,
   IRPassthrough,
+  PrimeHackMode,
+  PrimeHackAltProfile
 };
 
 class ControlGroup
@@ -103,6 +105,8 @@ public:
   const std::string ui_name;
   const GroupType type;
   const DefaultValue default_value;
+
+  bool use_metroid_ui = false;
 
   bool enabled = true;
   std::vector<std::unique_ptr<Control>> controls;

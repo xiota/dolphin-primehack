@@ -17,6 +17,8 @@
 #include "InputCommon/ControllerEmu/Setting/NumericSetting.h"
 #include "InputCommon/ControllerInterface/ControllerInterface.h"
 
+#include "Core/PrimeHack/HackConfig.h"
+
 namespace ControllerEmu
 {
 // This should theoretically be per EmulatedController instance,

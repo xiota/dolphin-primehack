@@ -30,7 +30,10 @@ public:
   std::unique_ptr<ControlReference> const control_ref;
   const Translatability translate;
   const std::string name;
-  const std::string ui_name;
+  std::string ui_name;
+
+  // Used to display original name alongside the ui name
+  bool display_alt = false;
 
 protected:
   Control(std::unique_ptr<ControlReference> ref, Translatability translate, std::string name,
