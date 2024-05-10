@@ -26,8 +26,10 @@
 
 #include "Core/Boot/Boot.h"
 #include "Core/Config/MainSettings.h"
+#include "Core/ConfigManager.h"
 #include "Core/Core.h"
 #include "Core/DolphinAnalytics.h"
+#include "Core/PrimeHack/HackConfig.h"
 #include "Core/System.h"
 
 #include "DolphinQt/Host.h"
@@ -252,36 +254,50 @@ int main(int argc, char* argv[])
 
     MainWindow win{std::move(boot), static_cast<const char*>(options.get("movie"))};
 
-#if defined(USE_ANALYTICS) && USE_ANALYTICS
-    if (!Config::Get(Config::MAIN_ANALYTICS_PERMISSION_ASKED))
+    if (!Config::Get(Config::PRIMEHACK_INITIAL_RUN))
     {
-      ModalMessageBox analytics_prompt(&win);
-
-      analytics_prompt.setIcon(QMessageBox::Question);
-      analytics_prompt.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-      analytics_prompt.setWindowTitle(QObject::tr("Allow Usage Statistics Reporting"));
-      analytics_prompt.setText(
-          QObject::tr("Do you authorize Dolphin to report information to Dolphin's developers?"));
-      analytics_prompt.setInformativeText(
-          QObject::tr("If authorized, Dolphin can collect data on its performance, "
-                      "feature usage, and configuration, as well as data on your system's "
-                      "hardware and operating system.\n\n"
-                      "No private data is ever collected. This data helps us understand "
-                      "how people and emulated games use Dolphin and prioritize our "
-                      "efforts. It also helps us identify rare configurations that are "
-                      "causing bugs, performance and stability issues.\n"
-                      "This authorization can be revoked at any time through Dolphin's "
-                      "settings."));
-
-      SetQWidgetWindowDecorations(&analytics_prompt);
-      const int answer = analytics_prompt.exec();
-
-      Config::SetBase(Config::MAIN_ANALYTICS_PERMISSION_ASKED, true);
-      Settings::Instance().SetAnalyticsEnabled(answer == QMessageBox::Yes);
-
-      DolphinAnalytics::Instance().ReloadConfig();
+      ModalMessageBox::primehack_initialrun(&win);
+      Config::SetBase(Config::PRIMEHACK_INITIAL_RUN, true);
     }
-#endif
+
+    std::thread([] {
+      Common::HttpRequest motd_req;
+      auto get_resp = motd_req.Get("https://gist.githubusercontent.com/shiiion/366c2421f650d456ddfb3803c06b49fd/raw/");
+      if (get_resp) {
+        prime::SetMotd(std::string(get_resp->begin(), get_resp->end()));
+      }
+    }).detach();
+
+// Don't send analytics, this is a fork.
+//#if defined(USE_ANALYTICS) && USE_ANALYTICS
+//    if (!Config::Get(Config::MAIN_ANALYTICS_PERMISSION_ASKED))
+//    {
+//      ModalMessageBox analytics_prompt(&win);
+//
+//      analytics_prompt.setIcon(QMessageBox::Question);
+//      analytics_prompt.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+//      analytics_prompt.setWindowTitle(QObject::tr("Allow Usage Statistics Reporting"));
+//      analytics_prompt.setText(
+//          QObject::tr("Do you authorize Dolphin to report information to Dolphin's developers?"));
+//      analytics_prompt.setInformativeText(
+//          QObject::tr("If authorized, Dolphin can collect data on its performance, "
+//                      "feature usage, and configuration, as well as data on your system's "
+//                      "hardware and operating system.\n\n"
+//                      "No private data is ever collected. This data helps us understand "
+//                      "how people and emulated games use Dolphin and prioritize our "
+//                      "efforts. It also helps us identify rare configurations that are "
+//                      "causing bugs, performance and stability issues.\n"
+//                      "This authorization can be revoked at any time through Dolphin's "
+//                      "settings."));
+//
+//      const int answer = analytics_prompt.exec();
+//
+//      Config::SetBase(Config::MAIN_ANALYTICS_PERMISSION_ASKED, true);
+//      Settings::Instance().SetAnalyticsEnabled(answer == QMessageBox::Yes);
+//
+//      DolphinAnalytics::Instance().ReloadConfig();
+//    }
+//#endif
 
     if (!Settings::Instance().IsBatchModeEnabled())
     {

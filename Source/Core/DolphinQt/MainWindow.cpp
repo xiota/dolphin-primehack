@@ -124,6 +124,7 @@
 #include "DolphinQt/TAS/WiiTASInputWindow.h"
 #include "DolphinQt/ToolBar.h"
 #include "DolphinQt/WiiUpdate.h"
+#include "DolphinQt/CVarsWindow.h"
 
 #include "InputCommon/ControllerInterface/ControllerInterface.h"
 #include "InputCommon/GCAdapter.h"
@@ -604,6 +605,26 @@ void MainWindow::ConnectMenuBar()
   connect(m_game_list, &GameList::SelectionChanged, m_menu_bar, &MenuBar::SelectionChanged);
   connect(this, &MainWindow::ReadOnlyModeChanged, m_menu_bar, &MenuBar::ReadOnlyModeChanged);
   connect(this, &MainWindow::RecordingStatusChanged, m_menu_bar, &MenuBar::RecordingStatusChanged);
+
+  // Symbols
+  connect(m_menu_bar, &MenuBar::NotifySymbolsUpdated, [this] {
+    m_code_widget->UpdateSymbols();
+    m_code_widget->Update();
+  });
+
+  connect(m_menu_bar, &MenuBar::OpenCVarsMenu, this, &MainWindow::OpenCVarsMenu);
+}
+
+void MainWindow::OpenCVarsMenu() {
+  if (m_cvars_window != nullptr) {
+    delete m_cvars_window;
+    m_cvars_window = nullptr;
+  }
+  m_cvars_window = new CVarsWindow(this);
+
+  m_cvars_window->show();
+  m_cvars_window->raise();
+  m_cvars_window->activateWindow();
 }
 
 void MainWindow::ConnectHotkeys()
@@ -1993,6 +2014,7 @@ void MainWindow::ShowTASInput()
   for (int i = 0; i < num_wii_controllers; i++)
   {
     if (Config::Get(Config::GetInfoForWiimoteSource(i)) == WiimoteSource::Emulated &&
+        Config::Get(Config::GetInfoForWiimoteSource(i)) == WiimoteSource::Metroid &&
         (!Core::IsRunning(system) || system.IsWii()))
     {
       SetQWidgetWindowDecorations(m_wii_tas_input_windows[i]);

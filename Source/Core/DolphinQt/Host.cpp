@@ -243,6 +243,11 @@ bool Host_TASInputHasFocus()
   return Host::GetInstance()->GetTASInputFocus();
 }
 
+void Host_RendererUpdateCursor(bool locked)
+{
+  emit Host::GetInstance()->UpdateAndRecenterCursor(locked);
+}
+
 void Host_YieldToUI()
 {
   qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
