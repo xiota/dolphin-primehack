@@ -28,6 +28,7 @@
 #include "Core/System.h"
 
 #include "InputCommon/ControllerInterface/ControllerInterface.h"
+#include "InputCommon/GenericMouse.h"
 
 namespace SerialInterface
 {
@@ -552,6 +553,9 @@ void SerialInterfaceManager::UpdateDevices()
   // Typically 120hz but is variable
   g_controller_interface.SetCurrentInputChannel(ciface::InputChannel::SerialInterface);
   g_controller_interface.UpdateInput();
+
+  //PrimeHack 
+  prime::g_mouse_input->UpdateInput();
 
   // Update channels and set the status bit if there's new data
   m_status_reg.RDST0 =
