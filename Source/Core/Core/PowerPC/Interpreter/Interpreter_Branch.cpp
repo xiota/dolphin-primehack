@@ -177,3 +177,9 @@ void Interpreter::sc(Interpreter& interpreter, UGeckoInstruction inst)
   interpreter.m_system.GetPowerPC().CheckExceptions();
   interpreter.m_end_block = true;
 }
+
+// Added this to Dolphin, this is a major security breach
+void Interpreter::vmcall(Interpreter& interpreter, UGeckoInstruction inst) {
+  interpreter.m_ppc_state.vmcall_table[inst.VMFI](interpreter.m_ppc_state, interpreter.m_mmu, inst.VMFP);
+  interpreter.m_end_block = true;
+}
