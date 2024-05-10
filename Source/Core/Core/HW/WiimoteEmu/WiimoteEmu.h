@@ -20,12 +20,15 @@
 #include "Core/HW/WiimoteEmu/I2CBus.h"
 #include "Core/HW/WiimoteEmu/MotionPlus.h"
 #include "Core/HW/WiimoteEmu/Speaker.h"
+#include "Core/HW/WiimoteEmu/Extension/Nunchuk.h"
 
 class PointerWrap;
 
 namespace ControllerEmu
 {
 class Attachments;
+class PrimeHackModes;
+class PrimeHackAltProfile;
 class Buttons;
 class ControlGroup;
 class Cursor;
@@ -37,6 +40,7 @@ class IMUCursor;
 class IRPassthrough;
 class ModifySettingsButton;
 class Output;
+class AnalogStick;
 class Tilt;
 }  // namespace ControllerEmu
 
@@ -61,6 +65,13 @@ enum class WiimoteGroup
   IMUGyroscope,
   IMUPoint,
   IRPassthrough,
+  Beams,
+  Visors,
+  Camera,
+  Misc,
+  ControlStick,
+  Modes,
+  AltProfileControls
 };
 
 enum class NunchukGroup;
@@ -162,10 +173,30 @@ public:
   void PrepareInput(WiimoteEmu::DesiredWiimoteState* target_state,
                     SensorBarState sensor_bar_state) override;
   void Update(const WiimoteEmu::DesiredWiimoteState& target_state) override;
+
   void EventLinked() override;
   void EventUnlinked() override;
   void InterruptDataOutput(const u8* data, u32 size) override;
   WiimoteCommon::ButtonData GetCurrentlyPressedButtons() override;
+
+  void ChangeUIPrimeHack(bool useMetroidUI);
+  Nunchuk* GetNunchuk();
+  bool CheckVisorCtrl(int visor_count);
+  bool CheckBeamCtrl(int beam_count);
+  bool CheckBeamScrollCtrl(bool direction);
+  bool CheckVisorScrollCtrl(bool direction);
+  bool CheckSpringBallCtrl();
+  bool CheckGrappleCtrl();
+  bool CheckUseGrappleTapping();
+  bool IsGrappleBinded();
+  bool CheckImprovedMotions();
+  bool PrimeControllerMode();
+  std::tuple<bool, bool> GetBVMenuOptions();
+
+  std::tuple<double, double> GetPrimeStickXY();
+  bool CheckPitchRecentre();
+
+  std::tuple <double, double, bool, bool, bool, bool, bool> GetPrimeSettings();
 
   void Reset();
 
@@ -180,6 +211,8 @@ public:
                const ControllerEmu::InputOverrideFunction& input_override_function);
 
 private:
+  bool using_metroid_ui = false;
+
   // Used only for error generation:
   static constexpr u8 EEPROM_I2C_ADDR = 0x50;
 
@@ -305,12 +338,42 @@ private:
   ControllerEmu::IMUCursor* m_imu_ir;
   ControllerEmu::IRPassthrough* m_ir_passthrough;
 
+  ControllerEmu::ControlGroup* m_primehack_beams;
+  ControllerEmu::ControlGroup* m_primehack_visors;
+  ControllerEmu::ControlGroup* m_primehack_motionhacks;
+  ControllerEmu::ControlGroup* m_primehack_camera;
+  ControllerEmu::ControlGroup* m_primehack_misc;
+  ControllerEmu::PrimeHackAltProfile* m_primehack_altprofile_controls;
+  ControllerEmu::PrimeHackModes* m_primehack_modes;
+  ControllerEmu::AnalogStick* m_primehack_stick;
+
   ControllerEmu::SettingValue<bool> m_sideways_setting;
   ControllerEmu::SettingValue<bool> m_upright_setting;
   ControllerEmu::SettingValue<double> m_battery_setting;
   ControllerEmu::SettingValue<bool> m_motion_plus_setting;
   ControllerEmu::SettingValue<double> m_fov_x_setting;
   ControllerEmu::SettingValue<double> m_fov_y_setting;
+
+  ControllerEmu::SettingValue<double> m_primehack_camera_sensitivity;
+  ControllerEmu::SettingValue<double> m_primehack_cursor_sensitivity;
+  ControllerEmu::SettingValue<double> m_primehack_horizontal_sensitivity;
+  ControllerEmu::SettingValue<double> m_primehack_vertical_sensitivity;
+
+  ControllerEmu::SettingValue<bool> m_primehack_invert_y;
+  ControllerEmu::SettingValue<bool> m_primehack_invert_x;
+
+  ControllerEmu::SettingValue<bool> m_primehack_beam_menu;
+  ControllerEmu::SettingValue<bool> m_primehack_visor_menu;
+
+  ControllerEmu::SettingValue<bool> m_primehack_improved_motions;
+  ControllerEmu::SettingValue<bool> m_primehack_tapping_grapple;
+  ControllerEmu::SettingValue<bool> m_primehack_scalesens;
+  ControllerEmu::SettingValue<bool> m_primehack_movereticle;
+  ControllerEmu::SettingValue<bool> m_primehack_remap_map_controls;
+
+  static constexpr u8 STICK_GATE_RADIUS = 0x60;
+  static constexpr u8 STICK_CENTER = 0x80;
+  static constexpr u8 STICK_RADIUS = 0x7F;
 
   SpeakerLogic m_speaker_logic;
   MotionPlus m_motion_plus;

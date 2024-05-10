@@ -11,9 +11,12 @@
 
 #include "Core/Config/WiimoteSettings.h"
 #include "Core/ConfigManager.h"
+#include "Core/Config/MainSettings.h"
+#include "Core/Config/GraphicsSettings.h"
 #include "Core/Core.h"
 #include "Core/HW/WiimoteEmu/WiimoteEmu.h"
 #include "Core/HW/WiimoteReal/WiimoteReal.h"
+#include "Core/HW/WiimoteEmu/Extension/Nunchuk.h"
 #include "Core/IOS/IOS.h"
 #include "Core/IOS/USB/Bluetooth/BTEmu.h"
 #include "Core/IOS/USB/Bluetooth/WiimoteDevice.h"
@@ -25,6 +28,8 @@
 #include "InputCommon/ControllerEmu/ControlGroup/ControlGroup.h"
 #include "InputCommon/InputConfig.h"
 
+#include "Core/PrimeHack/HackConfig.h"
+
 // Limit the amount of wiimote connect requests, when a button is pressed in disconnected state
 static std::array<u8, MAX_BBMOTES> s_last_connect_request_counter;
 
@@ -32,11 +37,6 @@ namespace
 {
 static std::array<std::atomic<WiimoteSource>, MAX_BBMOTES> s_wiimote_sources;
 static std::optional<Config::ConfigChangedCallbackID> s_config_callback_id = std::nullopt;
-
-WiimoteSource GetSource(unsigned int index)
-{
-  return s_wiimote_sources[index];
-}
 
 void OnSourceChanged(unsigned int index, WiimoteSource source)
 {
@@ -77,9 +77,11 @@ HIDWiimote* GetHIDWiimoteSource(unsigned int index)
 {
   HIDWiimote* hid_source = nullptr;
 
-  switch (GetSource(index))
+  WiimoteSource src = Wiimote::GetSource(index);
+  switch (src)
   {
   case WiimoteSource::Emulated:
+  case WiimoteSource::Metroid:
     hid_source = static_cast<WiimoteEmu::Wiimote*>(::Wiimote::GetConfig()->GetController(index));
     break;
 
@@ -90,6 +92,8 @@ HIDWiimote* GetHIDWiimoteSource(unsigned int index)
   default:
     break;
   }
+
+  Wiimote::ChangeUIPrimeHack(index, src == WiimoteSource::Metroid);
 
   return hid_source;
 }
@@ -209,6 +213,8 @@ void LoadConfig()
 {
   s_config.LoadConfig();
   s_last_connect_request_counter.fill(0);
+
+  prime::UpdateHackSettings();
 }
 
 void Resume()
@@ -221,6 +227,148 @@ void Pause()
   WiimoteReal::Pause();
 }
 
+void ChangeUIPrimeHack(int number, bool useMetroidUI)
+{
+  WiimoteEmu::Wiimote* wiimote = static_cast<WiimoteEmu::Wiimote*>(s_config.GetController(number));
+
+  wiimote->ChangeUIPrimeHack(useMetroidUI);
+  wiimote->GetNunchuk()->ChangeUIPrimeHack(useMetroidUI);
+}
+
+bool CheckVisor(int visorcount)
+{
+  WiimoteEmu::Wiimote* wiimote = static_cast<WiimoteEmu::Wiimote*>(s_config.GetController(0));
+
+  return wiimote->CheckVisorCtrl(visorcount);
+}
+
+bool CheckBeam(int beamcount)
+{
+  WiimoteEmu::Wiimote* wiimote = static_cast<WiimoteEmu::Wiimote*>(s_config.GetController(0));
+
+  return wiimote->CheckBeamCtrl(beamcount);
+}
+
+bool CheckForward() {
+  WiimoteEmu::Wiimote* wiimote = static_cast<WiimoteEmu::Wiimote*>(s_config.GetController(0));
+
+  return wiimote->GetNunchukGroup(WiimoteEmu::NunchukGroup::Stick)->
+      controls[0].get()->control_ref->State() > 0.5;
+}
+
+bool CheckBack() {
+  WiimoteEmu::Wiimote* wiimote = static_cast<WiimoteEmu::Wiimote*>(s_config.GetController(0));
+
+  return wiimote->GetNunchukGroup(WiimoteEmu::NunchukGroup::Stick)->
+      controls[1].get()->control_ref->State() > 0.5;
+}
+
+bool CheckLeft() {
+  WiimoteEmu::Wiimote* wiimote = static_cast<WiimoteEmu::Wiimote*>(s_config.GetController(0));
+
+  return wiimote->GetNunchukGroup(WiimoteEmu::NunchukGroup::Stick)->
+      controls[2].get()->control_ref->State() > 0.5;
+}
+
+bool CheckRight() {
+  WiimoteEmu::Wiimote* wiimote = static_cast<WiimoteEmu::Wiimote*>(s_config.GetController(0));
+
+  return wiimote->GetNunchukGroup(WiimoteEmu::NunchukGroup::Stick)->
+      controls[3].get()->control_ref->State() > 0.5;
+}
+
+bool CheckJump() {
+  WiimoteEmu::Wiimote* wiimote = static_cast<WiimoteEmu::Wiimote*>(s_config.GetController(0));
+
+  return wiimote->groups[0].get()->controls[1]->control_ref->State() > 0.5;
+}
+
+bool CheckGrapple() {
+  WiimoteEmu::Wiimote* wiimote = static_cast<WiimoteEmu::Wiimote*>(s_config.GetController(0));
+
+  return wiimote->CheckGrappleCtrl();
+}
+
+bool UseGrappleTapping() {
+  WiimoteEmu::Wiimote* wiimote = static_cast<WiimoteEmu::Wiimote*>(s_config.GetController(0));
+
+  return wiimote->CheckUseGrappleTapping();
+}
+
+bool GrappleCtlBound() {
+  WiimoteEmu::Wiimote* wiimote = static_cast<WiimoteEmu::Wiimote*>(s_config.GetController(0));
+
+  return wiimote->IsGrappleBinded();
+}
+
+bool CheckSpringBall()
+{
+  WiimoteEmu::Wiimote* wiimote = static_cast<WiimoteEmu::Wiimote*>(s_config.GetController(0));
+
+  return wiimote->CheckSpringBallCtrl();
+}
+
+std::tuple<bool, bool> GetBVMenuOptions()
+{
+  WiimoteEmu::Wiimote* wiimote = static_cast<WiimoteEmu::Wiimote*>(s_config.GetController(0));
+
+  return wiimote->GetBVMenuOptions();
+}
+
+bool CheckImprovedMotions()
+{
+  WiimoteEmu::Wiimote* wiimote = static_cast<WiimoteEmu::Wiimote*>(s_config.GetController(0));
+
+  return wiimote->CheckImprovedMotions();
+}
+
+bool CheckVisorScroll(bool direction)
+{
+  WiimoteEmu::Wiimote* wiimote = static_cast<WiimoteEmu::Wiimote*>(s_config.GetController(0));
+
+  return wiimote->CheckVisorScrollCtrl(direction);
+}
+
+bool CheckBeamScroll(bool direction)
+{
+  WiimoteEmu::Wiimote* wiimote = static_cast<WiimoteEmu::Wiimote*>(s_config.GetController(0));
+
+  return wiimote->CheckBeamScrollCtrl(direction);
+}
+
+bool PrimeUseController()
+{
+  WiimoteEmu::Wiimote* wiimote = static_cast<WiimoteEmu::Wiimote*>(s_config.GetController(0));
+
+  return wiimote->PrimeControllerMode();
+}
+
+std::tuple<double, double> GetPrimeStickXY()
+{
+  WiimoteEmu::Wiimote* wiimote = static_cast<WiimoteEmu::Wiimote*>(s_config.GetController(0));
+
+  return wiimote->GetPrimeStickXY();
+}
+
+std::tuple<double, double, bool, bool, bool, bool, bool> PrimeSettings()
+{
+  WiimoteEmu::Wiimote* wiimote = static_cast<WiimoteEmu::Wiimote*>(s_config.GetController(0));
+
+  return wiimote->GetPrimeSettings();
+}
+
+WiimoteSource GetSource(unsigned int index)
+{
+  return s_wiimote_sources[index];
+}
+
+bool CheckPitchRecentre()
+{
+  WiimoteEmu::Wiimote* wiimote = static_cast<WiimoteEmu::Wiimote*>(s_config.GetController(0));
+
+  return wiimote->CheckPitchRecentre();
+}
+
 void DoState(PointerWrap& p)
 {
   for (int i = 0; i < MAX_BBMOTES; ++i)
@@ -229,7 +377,7 @@ void DoState(PointerWrap& p)
     auto state_wiimote_source = u8(source);
     p.Do(state_wiimote_source);
 
-    if (WiimoteSource(state_wiimote_source) == WiimoteSource::Emulated)
+    if (WiimoteSource(state_wiimote_source) == WiimoteSource::Emulated || WiimoteSource(state_wiimote_source) == WiimoteSource::Metroid)
     {
       // Sync complete state of emulated wiimotes.
       static_cast<WiimoteEmu::Wiimote*>(s_config.GetController(i))->DoState(p);
