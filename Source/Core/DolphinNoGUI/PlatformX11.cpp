@@ -26,6 +26,8 @@ static constexpr auto X_None = None;
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
+#include <X11/extensions/XInput2.h>
+#include <X11/extensions/Xfixes.h>
 #include "UICommon/X11Utils.h"
 #include "VideoCommon/Present.h"
 
@@ -50,6 +52,7 @@ private:
   void CloseDisplay();
   void UpdateWindowPosition();
   void ProcessEvents();
+  void UpdateCursor(bool locked);
 
   Display* m_display = nullptr;
   Window m_window = {};
@@ -62,6 +65,21 @@ private:
   unsigned int m_window_width = Config::Get(Config::MAIN_RENDER_WINDOW_WIDTH);
   unsigned int m_window_height = Config::Get(Config::MAIN_RENDER_WINDOW_HEIGHT);
 };
+
+void PlatformX11::UpdateCursor(bool locked) {
+  if (locked) {
+    if (m_window != 0) {
+      XWarpPointer(m_display, 0, m_window, 0, 0, 0, 0, m_window_width / 2, m_window_height / 2);
+    }
+    if (Config::Get(Config::MAIN_SHOW_CURSOR) == Config::ShowCursor::Never) {
+      XDefineCursor(m_display, m_window, m_blank_cursor);
+    }
+  } else {
+    if (Config::Get(Config::MAIN_SHOW_CURSOR) == Config::ShowCursor::Never) {
+      XUndefineCursor(m_display, m_window);
+    }
+  }
+}
 
 PlatformX11::~PlatformX11()
 {
