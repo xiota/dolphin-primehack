@@ -28,6 +28,8 @@ add_executable(dolphin-emu
   CheatSearchWidget.h
   CheatsManager.cpp
   CheatsManager.h
+  CVarsWindow.h
+  CVarsWindow.cpp
   Achievements/AchievementBox.cpp
   Achievements/AchievementBox.h
   Achievements/AchievementHeaderWidget.cpp
@@ -84,6 +86,8 @@ add_executable(dolphin-emu
   Config/GameConfigWidget.h
   Config/GamecubeControllersWidget.cpp
   Config/GamecubeControllersWidget.h
+  Config/PrimeCheatsWidget.cpp
+  Config/PrimeCheatsWidget.h
   Config/GeckoCodeWidget.cpp
   Config/GeckoCodeWidget.h
   Config/Graphics/AdvancedWidget.cpp
@@ -104,6 +108,8 @@ add_executable(dolphin-emu
   Config/GraphicsModListWidget.h
   Config/GraphicsModWarningWidget.cpp
   Config/GraphicsModWarningWidget.h
+  Config/Graphics/PrimeWidget.cpp
+  Config/Graphics/PrimeWidget.h
   Config/HardcoreWarningWidget.cpp
   Config/HardcoreWarningWidget.h
   Config/InfoWidget.cpp
@@ -124,6 +130,8 @@ add_executable(dolphin-emu
   Config/Mapping/GCMicrophone.h
   Config/Mapping/GCPadEmu.cpp
   Config/Mapping/GCPadEmu.h
+  Config/Mapping/GCPadEmuMetroid.cpp
+  Config/Mapping/GCPadEmuMetroid.h
   Config/Mapping/GCPadWiiUConfigDialog.cpp
   Config/Mapping/GCPadWiiUConfigDialog.h
   Config/Mapping/Hotkey3D.cpp
@@ -169,6 +177,14 @@ add_executable(dolphin-emu
   Config/Mapping/WiimoteEmuExtensionMotionSimulation.h
   Config/Mapping/WiimoteEmuGeneral.cpp
   Config/Mapping/WiimoteEmuGeneral.h
+  Config/Mapping/WiimoteEmuMetroid.cpp
+  Config/Mapping/WiimoteEmuMetroid.h
+  Config/Mapping/PrimeHackEmuWii.cpp
+  Config/Mapping/PrimeHackEmuWii.h
+  Config/Mapping/PrimeHackEmuGC.cpp
+  Config/Mapping/PrimeHackEmuGC.h
+  Config/Mapping/HotkeyPrimeHack.cpp
+  Config/Mapping/HotkeyPrimeHack.h
   Config/Mapping/WiimoteEmuMotionControl.cpp
   Config/Mapping/WiimoteEmuMotionControl.h
   Config/Mapping/WiimoteEmuMotionControlIMU.cpp
@@ -535,7 +551,7 @@ if(GETTEXT_MSGFMT_EXECUTABLE)
       set(mo ${mo_dir}/${lang}.mo)
     else()
       set(mo_dir ${CMAKE_CURRENT_BINARY_DIR}/${lang})
-      set(mo ${mo_dir}/dolphin-emu.mo)
+      set(mo ${mo_dir}/primehack.mo)
     endif()
 
     target_sources(dolphin-emu PRIVATE ${mo})
@@ -643,6 +659,7 @@ if(APPLE)
       COMMAND /usr/bin/codesign -f -s "${MACOS_CODE_SIGNING_IDENTITY}" --deep --options=runtime --entitlements "${CMAKE_SOURCE_DIR}/Source/Core/DolphinQt/DolphinEmu$<$<CONFIG:Debug>:Debug>.entitlements" "$<TARGET_BUNDLE_DIR:dolphin-emu>")
   endif()
 else()
+  set_target_properties(dolphin-emu PROPERTIES OUTPUT_NAME primehack)
   install(TARGETS dolphin-emu RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
 

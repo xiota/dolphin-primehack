@@ -140,7 +140,7 @@ void WiimoteControllersWidget::CreateLayout()
     auto* wm_box = m_wiimote_boxes[i] = new QComboBox();
     auto* wm_button = m_wiimote_buttons[i] = new NonDefaultQPushButton(tr("Configure"));
 
-    for (const auto& item : {tr("None"), tr("Emulated Wii Remote"), tr("Real Wii Remote")})
+    for (const auto& item : {tr("None"), tr("Emulated Wii Remote"), tr("Real Wii Remote"), tr("Metroid (Wii Remote)")})
       wm_box->addItem(item);
 
     int wm_row = m_wiimote_layout->rowCount();
@@ -255,9 +255,28 @@ void WiimoteControllersWidget::OnWiimoteConfigure(size_t index)
     return;
   case 1:  // Emulated Wii Remote
     type = MappingWindow::Type::MAPPING_WIIMOTE_EMU;
+    Wiimote::ChangeUIPrimeHack(static_cast<int>(index), false);
+    break;
+  case 3:  // Metroid (Wii Remote)
+    type = MappingWindow::Type::MAPPING_WIIMOTE_METROID;
+    Wiimote::ChangeUIPrimeHack(static_cast<int>(index), true);
     break;
   default:
     return;
+  }
+
+
+  if (type == MappingWindow::Type::MAPPING_WIIMOTE_EMU) {
+    if (!Config::Get(Config::PRIMEHACK_PROMPT_TAB))
+    {
+      if (ModalMessageBox::primehack_wiitab(this)) {
+        type = MappingWindow::Type::MAPPING_WIIMOTE_METROID;
+        Wiimote::ChangeUIPrimeHack(static_cast<int>(index), true);
+        m_wiimote_boxes[index]->setCurrentIndex(3);
+      }
+
+      Config::SetBase(Config::PRIMEHACK_PROMPT_TAB, true);
+    }
   }
 
   MappingWindow* window = new MappingWindow(this, type, static_cast<int>(index));
@@ -314,7 +333,7 @@ void WiimoteControllersWidget::LoadSettings(Core::State state)
     m_wiimote_labels[i]->setEnabled(enable_emu_bt);
     m_wiimote_boxes[i]->setEnabled(enable_emu_bt && !running_netplay);
 
-    const bool is_emu_wiimote = m_wiimote_boxes[i]->currentIndex() == 1;
+    const bool is_emu_wiimote = m_wiimote_boxes[i]->currentIndex() == 1 || m_wiimote_boxes[i]->currentIndex() == 3;
     m_wiimote_buttons[i]->setEnabled(enable_emu_bt && is_emu_wiimote &&
                                      static_cast<int>(i) < num_local_wiimotes);
   }

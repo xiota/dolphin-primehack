@@ -41,6 +41,8 @@ signals:
   void RequestRenderSize(int w, int h);
   void UpdateDisasmDialog();
   void PPCSymbolsChanged();
+  void NotifyMapLoaded();
+  void UpdateAndRecenterCursor(bool locked);
 
 private:
   Host();

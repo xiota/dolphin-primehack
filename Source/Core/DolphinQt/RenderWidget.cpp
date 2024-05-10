@@ -35,6 +35,8 @@
 #include "VideoCommon/Present.h"
 #include "VideoCommon/VideoConfig.h"
 
+#include "InputCommon/GenericMouse.h"
+
 #ifdef _WIN32
 #include <Windows.h>
 #include <dwmapi.h>
@@ -59,6 +61,15 @@ RenderWidget::RenderWidget(QWidget* parent) : QWidget(parent)
     const auto dpr = window()->windowHandle()->screen()->devicePixelRatio();
 
     resize(w / dpr, h / dpr);
+  });
+  connect(Host::GetInstance(), &Host::UpdateAndRecenterCursor, this, [this](bool locked) {
+    if (locked) {
+      QRect render_rect = geometry();
+      QPoint center = mapToGlobal(QPoint(render_rect.width() / 2, render_rect.height() / 2));
+      cursor().setPos(windowHandle()->screen(), center);
+    }
+    setCursor((locked && Settings::Instance().GetCursorVisibility() == Config::Get(Config::MAIN_SHOW_CURSOR) ? Qt::BlankCursor :
+                                                                 Qt::ArrowCursor));
   });
 
   connect(&Settings::Instance(), &Settings::EmulationStateChanged, this, [this](Core::State state) {
@@ -270,6 +281,10 @@ void RenderWidget::SetCursorLocked(bool locked, bool follow_aspect_ratio)
   if (locked)
   {
 #ifdef _WIN32
+    // This will prevent the mouse from interacting with the task bar
+    // while in windowed / borderless fullscreen.
+    SetWindowPos((HWND) winId(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+
     RECT rect;
     rect.left = render_rect.left();
     rect.right = render_rect.right();
@@ -305,6 +320,7 @@ void RenderWidget::SetCursorLocked(bool locked, bool follow_aspect_ratio)
   else
   {
 #ifdef _WIN32
+    SetWindowPos((HWND) winId(), HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
     ClipCursor(nullptr);
 #endif
 
@@ -464,7 +480,12 @@ bool RenderWidget::event(QEvent* event)
     emit FocusChanged(false);
     break;
   case QEvent::Move:
+#if defined(CIFACE_USE_WIN32) || defined(CIFACE_USE_XLIB) || defined(CIFACE_USE_OSX)
     SetCursorLocked(m_cursor_locked);
+    win_w = size().width() / 2;
+    win_h = size().height() / 2;
+#endif
+
     break;
 
   // According to https://bugreports.qt.io/browse/QTBUG-95925 the recommended practice for
@@ -472,8 +493,7 @@ bool RenderWidget::event(QEvent* event)
   case QEvent::Paint:
   case QEvent::Resize:
   {
-    SetCursorLocked(m_cursor_locked);
-
+#if defined(CIFACE_USE_WIN32) || defined(CIFACE_USE_XLIB) || defined(CIFACE_USE_OSX)
     const QResizeEvent* se = static_cast<QResizeEvent*>(event);
     QSize new_size = se->size();
 
@@ -489,8 +509,13 @@ bool RenderWidget::event(QEvent* event)
       m_last_window_width = width;
       m_last_window_height = height;
       m_last_window_scale = dpr;
-      emit SizeChanged(width, height);
     }
+    // Window Centre for PrimeHack mouselock.
+    win_w = (new_size.width() * dpr) / 2;
+    win_h = (new_size.height() * dpr) / 2;
+
+    emit SizeChanged(new_size.width() * dpr, new_size.height() * dpr);
+#endif
     break;
   }
   // Happens when we add/remove the widget from the main window instead of the dedicated one
@@ -563,6 +588,18 @@ void RenderWidget::PassEventToPresenter(const QEvent* event)
   {
     const u32 button_mask = static_cast<u32>(static_cast<const QMouseEvent*>(event)->buttons());
     g_presenter->SetMousePress(button_mask);
+
+    if (Config::Get(Config::PRIMEHACK_ENABLE))
+    {
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+      int x = static_cast<const QMouseEvent*>(event)->position().x();
+      int y = static_cast<const QMouseEvent*>(event)->position().y();
+#else
+      int x = static_cast<const QMouseEvent*>(event)->x();
+      int y = static_cast<const QMouseEvent*>(event)->y();
+#endif
+      prime::g_mouse_input->mousePressEvent(x, y);
+    }
   }
   break;
 
