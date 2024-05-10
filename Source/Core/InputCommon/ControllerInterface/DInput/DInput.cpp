@@ -11,6 +11,8 @@
 #include "InputCommon/ControllerInterface/DInput/DInputJoystick.h"
 #include "InputCommon/ControllerInterface/DInput/DInputKeyboardMouse.h"
 
+#include "InputCommon/DInputMouseAbsolute.h"
+
 #pragma comment(lib, "Dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
 
@@ -73,6 +75,8 @@ void PopulateDevices(HWND hwnd)
   // that happens a lot (for uncontrolled reasons, like starting/stopping the emulation).
   g_controller_interface.RemoveDevice(
       [](const auto* dev) { return dev->GetSource() == DINPUT_SOURCE_NAME && !dev->IsValid(); });
+
+  prime::InitMouse(s_idi8);
 
   InitKeyboardMouse(s_idi8, hwnd);
   InitJoystick(s_idi8, hwnd);
