@@ -852,10 +852,11 @@ void Wiimote::LoadDefaults(const ControllerInterface& ciface)
 
   // DPad
   // Missiles
+  // Middle click is Click 2 on Fedora/Wayland and Windows 10
   if (using_metroid_ui)
-    m_buttons->SetControlExpression(6, "F");
+    m_buttons->SetControlExpression(6, "F | `Click 2`");
   else
-    m_dpad->SetControlExpression(1, "F");
+    m_dpad->SetControlExpression(1, "F | `Click 2`");
 
   // Motion Source
   m_imu_ir->enabled = false;
