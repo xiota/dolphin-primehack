@@ -249,7 +249,9 @@ void GCPad::LoadDefaults(const ControllerInterface& ciface)
 #endif
 
   m_buttons->SetControlExpression(2, "Ctrl"); // X
-  m_buttons->SetControlExpression(3, "F");  // Y
+
+  // Middle click is Click 2 on Fedora/Wayland and Windows 10
+  m_buttons->SetControlExpression(3, "F | `Click 2`");  // Y
 
   // D-Pad
   m_dpad->SetControlExpression(0, "E & `1`");  // Up
