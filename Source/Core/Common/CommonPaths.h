@@ -16,9 +16,9 @@
 #elif defined(__APPLE__)
 #define NORMAL_USER_DIR "Library/Application Support/Dolphin"
 #elif defined(ANDROID)
-#define NORMAL_USER_DIR "/sdcard/dolphin-emu"
+#define NORMAL_USER_DIR "/sdcard/primehack"
 #else
-#define NORMAL_USER_DIR "dolphin-emu"
+#define NORMAL_USER_DIR "primehack"
 #endif
 
 // The portable user directory

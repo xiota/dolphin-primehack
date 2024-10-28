@@ -132,6 +132,10 @@ void Host_YieldToUI()
 {
 }
 
+void Host_RendererUpdateCursor(bool locked) {
+  s_platform->UpdateCursor(locked);
+}
+
 void Host_TitleChanged()
 {
 #ifdef USE_DISCORD_PRESENCE

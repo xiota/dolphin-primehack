@@ -1259,6 +1259,11 @@ void GekkoDisassembler::ps_mem(u32 inst)
   }
 }
 
+void GekkoDisassembler::vmcall(u32 inst) {
+  m_opcode = "vmcall";
+  m_operands = fmt::format("vmtbl[{}]({})", (inst >> 16) & 0x3ff, (inst >> 11) & 0x1f);
+}
+
 // Disassemble PPC instruction and return a pointer to the next
 // instruction, or nullptr if an error occurred.
 u32* GekkoDisassembler::DoDisassembly(bool big_endian)
@@ -1360,6 +1365,10 @@ u32* GekkoDisassembler::DoDisassembly(bool big_endian)
 
     case 50:
       nooper(in, "rfi");
+      break;
+
+    case 51:
+      vmcall(in);
       break;
 
     case 129:
