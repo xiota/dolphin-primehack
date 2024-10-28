@@ -11,7 +11,7 @@ add_executable(dolphin-tool
   ToolMain.cpp
 )
 
-set_target_properties(dolphin-tool PROPERTIES OUTPUT_NAME dolphin-tool)
+set_target_properties(dolphin-tool PROPERTIES OUTPUT_NAME primehack-tool)
 
 target_link_libraries(dolphin-tool
 PRIVATE
