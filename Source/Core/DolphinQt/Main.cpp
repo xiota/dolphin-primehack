@@ -26,8 +26,10 @@
 
 #include "Core/Boot/Boot.h"
 #include "Core/Config/MainSettings.h"
+#include "Core/ConfigManager.h"
 #include "Core/Core.h"
 #include "Core/DolphinAnalytics.h"
+#include "Core/PrimeHack/HackConfig.h"
 #include "Core/System.h"
 
 #include "DolphinQt/Host.h"
@@ -252,7 +254,18 @@ int main(int argc, char* argv[])
     MainWindow win{Core::System::GetInstance(), std::move(boot),
                    static_cast<const char*>(options.get("movie"))};
 
-#if defined(USE_ANALYTICS) && USE_ANALYTICS
+    if (!Config::Get(Config::PRIMEHACK_INITIAL_RUN))
+    {
+      ModalMessageBox::primehack_initialrun(&win);
+      Config::SetBase(Config::PRIMEHACK_INITIAL_RUN, true);
+    }
+
+    std::thread([] {
+      prime::SetMotd("Thanks for using PrimeHack!");
+    }).detach();
+
+// Don't send analytics, this is a fork.
+#if 0
     if (!Config::Get(Config::MAIN_ANALYTICS_PERMISSION_ASKED))
     {
       ModalMessageBox analytics_prompt(&win);
