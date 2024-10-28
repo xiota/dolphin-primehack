@@ -11,8 +11,4 @@ This repo is organized into branches as follows:
 * `primehack-#.#.#` – Contain the PrimeHack patches rebased to tagged commits.
 * `primehack-aur` – Synced with the latest `primehack-#.#.#` branch.
     * This is the branch the AUR package builds from.
-
-Others:
-
-* `pr_rebrand` – Leftover from a PR to the PrimeHack repo.  Will probably delete soon because it is unlikely to be accepted.
 * `wip` – Testing and staging.  Not for general use.  Frequently rebased and force pushed.  
