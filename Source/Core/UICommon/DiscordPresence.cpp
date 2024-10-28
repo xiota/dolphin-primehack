@@ -27,6 +27,8 @@
 
 #endif
 
+#include "Common/Version.h"
+
 namespace Discord
 {
 #ifdef USE_DISCORD_PRESENCE
@@ -99,6 +101,7 @@ void HandleDiscordJoin(const char* join_secret)
   event_handler->DiscordJoin();
 }
 
+#if 0
 std::string ArtworkForGameId()
 {
   const DiscIO::Region region = SConfig::GetInstance().m_region;
@@ -108,7 +111,7 @@ std::string ArtworkForGameId()
   static constexpr char cover_url[] = "https://discord.dolphin-emu.org/cover-art/{}/{}.png";
   return fmt::format(cover_url, region_code, SConfig::GetInstance().GetGameTDBID());
 }
-
+#endif
 }  // namespace
 #endif
 
@@ -125,7 +128,8 @@ void Init()
   handlers.ready = HandleDiscordReady;
   handlers.joinRequest = HandleDiscordJoinRequest;
   handlers.joinGame = HandleDiscordJoin;
-  Discord_Initialize(DEFAULT_CLIENT_ID.c_str(), &handlers, 1, nullptr);
+  // The number is the client ID for Dolphin, it's used for images and the application name
+  Discord_Initialize("863127630534148136", &handlers, 1, nullptr);
   UpdateDiscordPresence();
 #endif
 }
@@ -210,24 +214,12 @@ void UpdateDiscordPresence(int party_size, SecretType type, const std::string& s
   if (s_using_custom_client)
     UpdateClientID(DEFAULT_CLIENT_ID);
 
-  const std::string& title =
-      current_game.empty() ? SConfig::GetInstance().GetTitleDescription() : current_game;
-  std::string game_artwork =
-      SConfig::GetInstance().GetGameTDBID().empty() ? "" : ArtworkForGameId();
+  const std::string& title = "v" + Common::GetScmRevStr() + " (Dolphin Emulator Fork)";
 
   DiscordRichPresence discord_presence = {};
-  if (game_artwork.empty())
-  {
-    discord_presence.largeImageKey = "dolphin_logo";
-    discord_presence.largeImageText = "Dolphin is an emulator for the GameCube and the Wii.";
-  }
-  else
-  {
-    discord_presence.largeImageKey = game_artwork.c_str();
-    discord_presence.largeImageText = title.c_str();
-    discord_presence.smallImageKey = "dolphin_logo";
-    discord_presence.smallImageText = "Dolphin is an emulator for the GameCube and the Wii.";
-  }
+  discord_presence.largeImageKey = "primehack_logo";
+  discord_presence.largeImageText = "PrimeHack is a fork of Dolphin Emulator to bring traditional FPS controls and settings to the Metroid Prime series.";
+
   discord_presence.details = title.empty() ? "Not in-game" : title.c_str();
   if (reset_timer)
   {
