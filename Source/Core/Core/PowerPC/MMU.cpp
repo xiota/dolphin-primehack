@@ -35,6 +35,7 @@
 #include "Common/BitUtils.h"
 #include "Common/CommonTypes.h"
 #include "Common/Logging/Log.h"
+#include "Common/FloatUtils.h"
 
 #include "Core/Core.h"
 #include "Core/HW/CPU.h"
@@ -1735,5 +1736,15 @@ void WriteU32SwapFromJit(MMU& mmu, u32 var, u32 address)
 void WriteU64SwapFromJit(MMU& mmu, u64 var, u32 address)
 {
   mmu.Write_U64_Swap(var, address);
+}
+
+// Additional junk for my sanity
+float MMU::Read_F32(u32 address) {
+  return std::bit_cast<float>(Read_U32(address));
+}
+
+void MMU::Write_F32(float var, u32 address) {
+  u32 uvar = std::bit_cast<u32>(var);
+  Write_U32(uvar, address);
 }
 }  // namespace PowerPC

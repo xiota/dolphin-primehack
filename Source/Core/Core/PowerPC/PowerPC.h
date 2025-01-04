@@ -105,6 +105,10 @@ struct PairedSingle
 // Paired single must be standard layout in order for offsetof to work, which is used by the JITs
 static_assert(std::is_standard_layout<PairedSingle>(), "PairedSingle must be standard layout");
 
+struct PowerPCState;
+class MMU;
+typedef void(*vm_call)(PowerPCState&, MMU&, u32);
+
 // This contains the entire state of the emulated PowerPC "Gekko" CPU.
 //
 // To minimize code size on x86, we want as much useful stuff in the first 256 bytes as possible.
@@ -184,6 +188,8 @@ struct PowerPCState
   bool m_enable_dcache = false;
   Cache dCache;
 
+  std::array<vm_call, 1024> vmcall_table;
+
   // Reservation monitor for lwarx and its friend stwcxd.
   bool reserve;
   u32 reserve_address;
@@ -261,6 +267,9 @@ public:
   void Shutdown();
   void DoState(PointerWrap& p);
   void ScheduleInvalidateCacheThreadSafe(u32 address);
+  void RegisterVmcallWithIndex(int index, vm_call pfn);
+  int RegisterVmcall(vm_call pfn);
+  void VmcallDefaultFn(u32 param);
 
   CoreMode GetMode() const;
   // [NOT THREADSAFE] CPU Thread or CPU::PauseAndLock or Core::State::Uninitialized

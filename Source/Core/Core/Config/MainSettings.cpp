@@ -221,6 +221,20 @@ const Info<std::string> MAIN_GPU_DETERMINISM_MODE{{System::Main, "Core", "GPUDet
                                                   "auto"};
 const Info<s32> MAIN_OVERRIDE_BOOT_IOS{{System::Main, "Core", "OverrideBootIOS"}, -1};
 
+// PrimeHack
+const Info<bool> PRIMEHACK_ENABLE{{System::Main, "Core", "EnablePrimeHack"}, true};
+const Info<bool> PRIMEHACK_INITIAL_RUN{{System::Main, "Core", "InitialPrimeHackRun"}, false};
+const Info<bool> PRIMEHACK_PROMPT_TAB{{System::Main, "Core", "PromptPrimeHackTab"}, false};
+
+const Info<bool> PRIMEHACK_NOCLIP{{System::Main, "Core", "PrimeNoclip"}, false};
+const Info<bool> PRIMEHACK_INVULNERABILITY{{System::Main, "Core", "PrimeInvulnerability"}, false};
+const Info<bool> PRIMEHACK_SKIPMP2_PORTAL{{System::Main, "Core", "PrimeSkipMP2Portal"}, false};
+const Info<bool> PRIMEHACK_SKIPPABLE_CUTSCENES{{System::Main, "Core", "PrimeSkippableCutscenes"}, false};
+const Info<bool> PRIMEHACK_RESTORE_SCANDASH{{System::Main, "Core", "PrimeRestoreDashing"}, false};
+const Info<bool> PRIMEHACK_FRIENDVOUCHERS{{System::Main, "Core", "PrimeFriendVouchers"}, true};
+const Info<bool> PRIMEHACK_DISABLE_HUDMEMO{{System::Main, "Core", "PrimeDisableHudMemo"}, false};
+const Info<bool> PRIMEHACK_UNLOCK_HYPERMODE{{System::Main, "Core", "PrimeUnlockHypermode"}, true};
+
 GPUDeterminismMode GetGPUDeterminismMode()
 {
   auto mode = Config::Get(Config::MAIN_GPU_DETERMINISM_MODE);
@@ -392,7 +406,7 @@ const Info<int> MAIN_NETWORK_TIMEOUT{{System::Main, "Network", "NetworkTimeout"}
 
 const Info<bool> MAIN_USE_HIGH_CONTRAST_TOOLTIPS{
     {System::Main, "Interface", "UseHighContrastTooltips"}, true};
-const Info<bool> MAIN_USE_PANIC_HANDLERS{{System::Main, "Interface", "UsePanicHandlers"}, true};
+const Info<bool> MAIN_USE_PANIC_HANDLERS{{System::Main, "Interface", "UsePanicHandlers"}, false};
 const Info<bool> MAIN_ABORT_ON_PANIC_ALERT{{System::Main, "Interface", "AbortOnPanicAlert"}, false};
 const Info<bool> MAIN_OSD_MESSAGES{{System::Main, "Interface", "OnScreenDisplayMessages"}, true};
 const Info<bool> MAIN_SKIP_NKIT_WARNING{{System::Main, "Interface", "SkipNKitWarning"}, false};

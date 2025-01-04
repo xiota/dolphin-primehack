@@ -358,6 +358,20 @@ void SetUSBDeviceWhitelist(const std::set<std::pair<u16, u16>>& devices);
 extern const Info<bool> MAIN_EMULATE_SKYLANDER_PORTAL;
 extern const Info<bool> MAIN_EMULATE_INFINITY_BASE;
 
+// PrimeHack
+extern const Info<bool> PRIMEHACK_ENABLE;
+extern const Info<bool> PRIMEHACK_INITIAL_RUN;
+extern const Info<bool> PRIMEHACK_PROMPT_TAB;
+
+extern const Info<bool> PRIMEHACK_NOCLIP;
+extern const Info<bool> PRIMEHACK_INVULNERABILITY;
+extern const Info<bool> PRIMEHACK_SKIPMP2_PORTAL;
+extern const Info<bool> PRIMEHACK_SKIPPABLE_CUTSCENES;
+extern const Info<bool> PRIMEHACK_RESTORE_SCANDASH;
+extern const Info<bool> PRIMEHACK_FRIENDVOUCHERS;
+extern const Info<bool> PRIMEHACK_DISABLE_HUDMEMO;
+extern const Info<bool> PRIMEHACK_UNLOCK_HYPERMODE;
+
 // GameCube path utility functions
 
 // Replaces NTSC-K with some other region, and doesn't replace non-NTSC-K regions
