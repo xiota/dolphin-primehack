@@ -133,7 +133,7 @@ constexpr std::array<InterpreterOpTemplate, 4> s_table4_3{{
     {39, Interpreter::psq_stux},  // psq_stux
 }};
 
-constexpr std::array<InterpreterOpTemplate, 13> s_table19{{
+constexpr std::array<InterpreterOpTemplate, 14> s_table19{{
     {528, Interpreter::bcctrx},  // bcctrx
     {16, Interpreter::bclrx},    // bclrx
     {257, Interpreter::crand},   // crand
@@ -149,6 +149,7 @@ constexpr std::array<InterpreterOpTemplate, 13> s_table19{{
     {0, Interpreter::mcrf},     // mcrf
 
     {50, Interpreter::rfi},  // rfi
+    {51, Interpreter::vmcall},  // vmcall
 }};
 
 constexpr std::array<InterpreterOpTemplate, 107> s_table31{{
