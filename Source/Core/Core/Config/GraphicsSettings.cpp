@@ -98,11 +98,12 @@ const Info<bool> GFX_BACKEND_MULTITHREADING{{System::GFX, "Settings", "BackendMu
 const Info<int> GFX_COMMAND_BUFFER_EXECUTE_INTERVAL{
     {System::GFX, "Settings", "CommandBufferExecuteInterval"}, 100};
 
+
 const Info<bool> GFX_SHADER_CACHE{{System::GFX, "Settings", "ShaderCache"}, true};
 const Info<bool> GFX_WAIT_FOR_SHADERS_BEFORE_STARTING{
-    {System::GFX, "Settings", "WaitForShadersBeforeStarting"}, false};
+  {System::GFX, "Settings", "WaitForShadersBeforeStarting"}, false};
 const Info<ShaderCompilationMode> GFX_SHADER_COMPILATION_MODE{
-    {System::GFX, "Settings", "ShaderCompilationMode"}, ShaderCompilationMode::Synchronous};
+  {System::GFX, "Settings", "ShaderCompilationMode"}, ShaderCompilationMode::AsynchronousUberShaders};
 const Info<int> GFX_SHADER_COMPILER_THREADS{{System::GFX, "Settings", "ShaderCompilerThreads"}, 1};
 const Info<int> GFX_SHADER_PRECOMPILER_THREADS{
     {System::GFX, "Settings", "ShaderPrecompilerThreads"}, -1};
@@ -192,7 +193,7 @@ const Info<bool> GFX_HACK_SKIP_EFB_COPY_TO_RAM{{System::GFX, "Hacks", "EFBToText
 const Info<bool> GFX_HACK_SKIP_XFB_COPY_TO_RAM{{System::GFX, "Hacks", "XFBToTextureEnable"}, true};
 const Info<bool> GFX_HACK_DISABLE_COPY_TO_VRAM{{System::GFX, "Hacks", "DisableCopyToVRAM"}, false};
 const Info<bool> GFX_HACK_DEFER_EFB_COPIES{{System::GFX, "Hacks", "DeferEFBCopies"}, true};
-const Info<bool> GFX_HACK_IMMEDIATE_XFB{{System::GFX, "Hacks", "ImmediateXFBEnable"}, false};
+const Info<bool> GFX_HACK_IMMEDIATE_XFB{{System::GFX, "Hacks", "ImmediateXFBEnable"}, true};
 const Info<bool> GFX_HACK_SKIP_DUPLICATE_XFBS{{System::GFX, "Hacks", "SkipDuplicateXFBs"}, true};
 const Info<bool> GFX_HACK_EARLY_XFB_OUTPUT{{System::GFX, "Hacks", "EarlyXFBOutput"}, true};
 const Info<bool> GFX_HACK_COPY_EFB_SCALED{{System::GFX, "Hacks", "EFBScaledCopy"}, true};
@@ -211,5 +212,23 @@ const Info<bool> GFX_HACK_NO_MIPMAPPING{{System::GFX, "Hacks", "NoMipmapping"}, 
 // Graphics.GameSpecific
 
 const Info<bool> GFX_PERF_QUERIES_ENABLE{{System::GFX, "GameSpecific", "PerfQueriesEnable"}, false};
+
+// Graphics.PrimeHack
+const Info<bool> AUTO_EFB{{System::GFX, "PrimeHack Misc", "AutoEFBMP"}, true};
+const Info<bool> LOCKCAMERA_IN_PUZZLES{{System::GFX, "PrimeHack Misc", "Lock Camera in Motion Puzzles"}, true};
+const Info<bool> DISABLE_BLOOM{{System::GFX, "PrimeHack Misc", "DisableBloom"}, false};
+const Info<bool> REDUCE_BLOOM{{System::GFX, "PrimeHack Misc", "ReduceBloom"}, true};
+const Info<int> BLOOM_INTENSITY{{System::GFX, "PrimeHack Misc", "BloomIntensity"}, 100};
+const Info<int> FOV{{System::GFX, "PrimeHack Misc", "Field of View"}, 60};
+const Info<bool> TOGGLE_ARM_REPOSITION{{System::GFX, "PrimeHack Misc", "ToggleArmRePosition"}, true};
+const Info<bool> TOGGLE_CULLING{{System::GFX, "PrimeHack Misc", "ToggleCulling"}, false};
+const Info<bool> ENABLE_SECONDARY_GUNFX{{System::GFX, "PrimeHack Misc", "EnableSecondaryGunFX"}, false};
+const Info<bool> GC_SHOW_CROSSHAIR{ {System::GFX, "PrimeHack Misc", "GC_ShowCrosshair"}, false };
+const Info<int> GC_CROSSHAIR_COLOR_RGBA{ {System::GFX, "PrimeHack Misc", "GC_Crosshair_Color_RGBA"}, 0x4b7ea331 };
+
+const Info<int> ARMPOSITION_MODE{{System::GFX, "PrimeHack Misc", "ArmPosition_Mode"}, 0};
+const Info<int> ARMPOSITION_LEFTRIGHT{{System::GFX, "PrimeHack Misc", "ArmPosition_LEFTRIGHT"}, 25};
+const Info<int> ARMPOSITION_UPDOWN{{System::GFX, "PrimeHack Misc", "ArmPosition_UPDOWN"}, -30};
+const Info<int> ARMPOSITION_FORWARDBACK{{System::GFX, "PrimeHack Misc", "ArmPosition_FORWARDBACK"}, -35};
 
 }  // namespace Config
