@@ -6,6 +6,7 @@
 #include <QDialog>
 
 class QTabWidget;
+class InterfacePane;
 
 enum class TabIndex
 {
@@ -23,4 +24,5 @@ public:
 
 private:
   QTabWidget* m_tab_widget;
+  InterfacePane* m_interface_pane;
 };
