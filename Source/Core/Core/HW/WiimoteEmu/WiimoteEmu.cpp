@@ -37,6 +37,8 @@
 #include "Core/HW/WiimoteEmu/Extension/UDrawTablet.h"
 
 #include "InputCommon/ControllerEmu/ControlGroup/Attachments.h"
+#include "InputCommon/ControllerEmu/ControlGroup/PrimeHackModes.h"
+#include "InputCommon/ControllerEmu/ControlGroup/PrimeHackAltProfile.h"
 #include "InputCommon/ControllerEmu/ControlGroup/Buttons.h"
 #include "InputCommon/ControllerEmu/ControlGroup/ControlGroup.h"
 #include "InputCommon/ControllerEmu/ControlGroup/Cursor.h"
@@ -47,6 +49,9 @@
 #include "InputCommon/ControllerEmu/ControlGroup/IRPassthrough.h"
 #include "InputCommon/ControllerEmu/ControlGroup/ModifySettingsButton.h"
 #include "InputCommon/ControllerEmu/ControlGroup/Tilt.h"
+#include "InputCommon/ControllerEmu/ControlGroup/AnalogStick.h"
+
+#include "Core/PrimeHack/HackConfig.h"
 
 namespace WiimoteEmu
 {
@@ -61,6 +66,21 @@ static const u16 dpad_bitmasks[] = {Wiimote::PAD_UP, Wiimote::PAD_DOWN, Wiimote:
 
 static const u16 dpad_sideways_bitmasks[] = {Wiimote::PAD_RIGHT, Wiimote::PAD_LEFT, Wiimote::PAD_UP,
                                              Wiimote::PAD_DOWN};
+
+static const u16 metroid_button_bitmasks[] = {
+    Wiimote::BUTTON_A,     Wiimote::BUTTON_B,    Wiimote::BUTTON_ONE, Wiimote::BUTTON_TWO,
+    Wiimote::BUTTON_MINUS, Wiimote::BUTTON_PLUS, Wiimote::PAD_DOWN};
+
+constexpr std::array<std::string_view, 7> named_buttons{
+    "A", "B", "1", "2", "-", "+", "Home",
+};
+
+constexpr std::array<std::string_view, 7> metroid_named_buttons{
+  "Shoot / Select", "Jump / Cancel", "Map", "Menu / Hint", "Visor Menu \nMenu -", "Beam Menu \nHypermode \nMenu +", "Missile",
+};
+
+static const char* const prime_beams[] = {"Beam 1", "Beam 2", "Beam 3", "Beam 4"};
+static const char* const prime_visors[] = {"Visor 1", "Visor 2", "Visor 3", "Visor 4"};
 
 void Wiimote::Reset()
 {
@@ -295,7 +315,7 @@ Wiimote::Wiimote(const unsigned int index) : m_index(index), m_bt_device_index(i
                         {_trans("Battery"),
                          // i18n: The percent symbol.
                          _trans("%")},
-                        95, 0, 100);
+                        100, 0, 100);
 
   // Note: "Upright" and "Sideways" options can be enabled at the same time which produces an
   // orientation where the wiimote points towards the left with the buttons towards you.
@@ -304,6 +324,83 @@ Wiimote::Wiimote(const unsigned int index) : m_index(index), m_bt_device_index(i
 
   m_options->AddSetting(&m_sideways_setting,
                         {SIDEWAYS_OPTION, nullptr, nullptr, _trans("Sideways Wii Remote")}, false);
+
+  // Adding PrimeHack Buttons
+  groups.emplace_back(m_primehack_beams = new ControllerEmu::ControlGroup(_trans("PrimeHack")));
+  for (const char* prime_button : prime_beams)
+  {
+    const std::string& ui_name = prime_button;
+    m_primehack_beams->AddInput(Translatability::DoNotTranslate, prime_button, ui_name);
+  }
+
+  m_primehack_beams->AddInput(Translatability::DoNotTranslate, _trans("Next Beam"), "Next Beam");
+  m_primehack_beams->AddInput(Translatability::DoNotTranslate, _trans("Previous Beam"), "Previous Beam");
+
+  m_primehack_beams->AddSetting(
+    &m_primehack_beam_menu, {"Enable Beam Menu", nullptr, nullptr, _trans("Enable Beam Menu")}, false);
+
+  groups.emplace_back(m_primehack_visors = new ControllerEmu::ControlGroup(_trans("PrimeHack")));
+  for (const char* prime_button : prime_visors)
+  {
+    const std::string& ui_name = prime_button;
+    m_primehack_visors->AddInput(Translatability::DoNotTranslate, prime_button, ui_name);
+  }
+
+  m_primehack_visors->AddInput(Translatability::DoNotTranslate, _trans("Next Visor"), "Next Visor");
+  m_primehack_visors->AddInput(Translatability::DoNotTranslate, _trans("Previous Visor"), "Previous Visor");
+
+  m_primehack_visors->AddSetting(
+    &m_primehack_visor_menu, {"Enable Visor Menu", nullptr, nullptr, _trans("Enable Visor Menu")}, false);
+
+  groups.emplace_back(m_primehack_altprofile_controls =
+                          new ControllerEmu::PrimeHackAltProfile(_trans("PrimeHack"), ""));
+
+  groups.emplace_back(m_primehack_camera = new ControllerEmu::ControlGroup(_trans("PrimeHack")));
+
+  m_primehack_camera->AddSetting(
+    &m_primehack_invert_x, {"Invert X Axis", nullptr, nullptr, _trans("Invert X Axis")}, false);
+
+  m_primehack_camera->AddSetting(
+    &m_primehack_invert_y, {"Invert Y Axis", nullptr, nullptr, _trans("Invert Y Axis")}, false);
+
+  m_primehack_camera->AddSetting(
+    &m_primehack_scalesens, {"Scale Cursor Sensitivity by Window Size", nullptr, nullptr, _trans("Scale Cursor Sensitivity by Window Size")}, false);
+
+  m_primehack_camera->AddSetting(
+    &m_primehack_movereticle, {"Control Reticle When Locked-On", nullptr, nullptr, _trans("Control Reticle When Locked-On")}, false);
+  m_primehack_camera->AddSetting(
+    &m_primehack_remap_map_controls,
+    {"Rotate Map with Mouse", nullptr, nullptr, _trans("Rotate Map with Mouse")}, true);
+
+  m_primehack_camera->AddSetting(
+      &m_primehack_camera_sensitivity,
+      {"Camera Sensitivity", nullptr, nullptr, _trans("Camera Sensitivity")}, 15, 1, 100);
+
+  m_primehack_camera->AddSetting(
+      &m_primehack_cursor_sensitivity,
+      {"Cursor Sensitivity", nullptr, nullptr, _trans("Cursor Sensitivity")}, 15, 1, 100);
+
+  constexpr auto gate_radius = ControlState(STICK_GATE_RADIUS) / STICK_RADIUS;
+  groups.emplace_back(m_primehack_stick =
+    new ControllerEmu::OctagonAnalogStick(_trans("Camera Control"), gate_radius));
+
+  m_primehack_stick->AddSetting(&m_primehack_horizontal_sensitivity, {"Horizontal Sensitivity", nullptr, nullptr, _trans("Horizontal Sensitivity")}, 45, 1, 100);
+  m_primehack_stick->AddSetting(&m_primehack_vertical_sensitivity, {"Vertical Sensitivity", nullptr, nullptr, _trans("Vertical Sensitivity")}, 35, 1, 100);
+  m_primehack_stick->AddInput(Translatability::Translate, _trans("Reset Camera Pitch"));
+
+  groups.emplace_back(m_primehack_modes = new ControllerEmu::PrimeHackModes(_trans("PrimeHack")));
+
+  groups.emplace_back(m_primehack_misc = new ControllerEmu::ControlGroup(_trans("PrimeHack")));
+
+  m_primehack_misc->AddInput(Translatability::DoNotTranslate, "Spring Ball", "Spring Ball");
+
+  m_primehack_misc->AddInput(Translatability::DoNotTranslate, "Grapple Lasso", "Grapple Lasso");
+
+  m_primehack_misc->AddSetting(
+    &m_primehack_tapping_grapple, {"Tap Grapple Repeatedly To Pull", nullptr, nullptr, _trans("Tap Grapple Repeatedly To Pull")}, false);
+
+  m_primehack_misc->AddSetting(
+    &m_primehack_improved_motions, {"Improved Motion Controls", nullptr, nullptr, _trans("Improved Motion Controls")}, true);
 
   Reset();
 
@@ -360,6 +457,20 @@ ControllerEmu::ControlGroup* Wiimote::GetWiimoteGroup(WiimoteGroup group) const
     return m_imu_ir;
   case WiimoteGroup::IRPassthrough:
     return m_ir_passthrough;
+  case WiimoteGroup::Beams:
+	  return m_primehack_beams;
+  case WiimoteGroup::Visors:
+	  return m_primehack_visors;
+  case WiimoteGroup::Misc:
+	  return m_primehack_misc;
+  case WiimoteGroup::Camera:
+	  return m_primehack_camera;
+  case WiimoteGroup::ControlStick:
+    return m_primehack_stick;
+  case WiimoteGroup::Modes:
+    return m_primehack_modes;
+  case WiimoteGroup::AltProfileControls:
+    return m_primehack_altprofile_controls;
   default:
     ASSERT(false);
     return nullptr;
@@ -445,6 +556,9 @@ bool Wiimote::ProcessExtensionPortEvent()
 void Wiimote::UpdateButtonsStatus(const DesiredWiimoteState& target_state)
 {
   m_status.buttons.hex = target_state.buttons.hex & ButtonData::BUTTON_MASK;
+
+  m_buttons->GetState(&m_status.buttons.hex, using_metroid_ui ? metroid_button_bitmasks : button_bitmasks);
+  m_dpad->GetState(&m_status.buttons.hex, IsSideways() ? dpad_sideways_bitmasks : dpad_bitmasks);
 }
 
 static std::array<CameraPoint, CameraLogic::NUM_POINTS>
@@ -486,7 +600,7 @@ void Wiimote::BuildDesiredWiimoteState(DesiredWiimoteState* target_state,
 
   // Fetch pressed buttons from user input.
   target_state->buttons.hex = 0;
-  m_buttons->GetState(&target_state->buttons.hex, button_bitmasks, m_input_override_function);
+  m_buttons->GetState(&target_state->buttons.hex, using_metroid_ui ? metroid_button_bitmasks : button_bitmasks, m_input_override_function);
   m_dpad->GetState(&target_state->buttons.hex,
                    IsSideways() ? dpad_sideways_bitmasks : dpad_bitmasks,
                    m_input_override_function);
@@ -675,9 +789,16 @@ ButtonData Wiimote::GetCurrentlyPressedButtons()
   const auto lock = GetStateLock();
 
   ButtonData buttons{};
-  m_buttons->GetState(&buttons.hex, button_bitmasks, m_input_override_function);
-  m_dpad->GetState(&buttons.hex, IsSideways() ? dpad_sideways_bitmasks : dpad_bitmasks,
-                   m_input_override_function);
+  if (using_metroid_ui)
+  {
+    m_buttons->GetState(&buttons.hex, metroid_button_bitmasks, m_input_override_function);
+  }
+  else
+  {
+    m_buttons->GetState(&buttons.hex, button_bitmasks, m_input_override_function);
+    m_dpad->GetState(&buttons.hex, IsSideways() ? dpad_sideways_bitmasks : dpad_bitmasks,
+                     m_input_override_function);
+  }
 
   return buttons;
 }
@@ -791,6 +912,49 @@ void Wiimote::LoadDefaults(const ControllerInterface& ciface)
   constexpr ExtensionNumber DEFAULT_EXT = ExtensionNumber::NUNCHUK;
   m_attachments->SetSelectedAttachment(DEFAULT_EXT);
   m_attachments->GetAttachmentList()[DEFAULT_EXT]->LoadDefaults(ciface);
+
+  // PrimeHack
+#ifdef _WIN32
+  m_buttons->SetControlExpression(0, "`Click 0` | RETURN"); // Fire
+  m_buttons->SetControlExpression(1, "SPACE"); // Jump
+  m_buttons->SetControlExpression(2, "TAB"); // Map
+  m_buttons->SetControlExpression(3, "GRAVE"); // Pause Menu
+#else
+  m_buttons->SetControlExpression(0, "`Click 1` | RETURN"); // Fire
+  m_buttons->SetControlExpression(1, "space"); // Jump
+  m_buttons->SetControlExpression(2, "Tab"); // Map
+  m_buttons->SetControlExpression(3, "`grave`"); // Pause Menu
+#endif
+
+  // +-
+  m_buttons->SetControlExpression(4, "E");
+  m_buttons->SetControlExpression(5, "R");
+
+  // Missiles
+  // Middle click is Click 2 on Fedora/Wayland and Windows 10
+  if (using_metroid_ui)
+    m_buttons->SetControlExpression(6, "F | `Click 2`");
+  else
+    m_dpad->SetControlExpression(1, "F | `Click 2`");
+
+  // Beams
+  m_primehack_beams->SetControlExpression(0, "`1` & !E");
+  m_primehack_beams->SetControlExpression(1, "`2` & !E");
+  m_primehack_beams->SetControlExpression(2, "`3` & !E");
+  m_primehack_beams->SetControlExpression(3, "`4` & !E");
+  m_primehack_beams->SetControlExpression(4, "!E & `Axis Z+`"); // Next beam
+  m_primehack_beams->SetControlExpression(5, "!E & `Axis Z-`"); // Previous beam
+
+  // Visors (Combination keys strongly recommended)
+  m_primehack_visors->SetControlExpression(0, "E & (!`1` & !`2` & !`3`)");
+  m_primehack_visors->SetControlExpression(1, "E & `1`");
+  m_primehack_visors->SetControlExpression(2, "E & `2`");
+  m_primehack_visors->SetControlExpression(3, "E & `3`");
+  m_primehack_visors->SetControlExpression(4, "E & `Axis Z+`"); // Next visor
+  m_primehack_visors->SetControlExpression(5, "E & `Axis Z-`"); // Previous visor
+                                                                    // Misc. Defaults
+  m_primehack_misc->SetControlExpression(0, "Alt"); // Spring Ball
+  m_primehack_misc->SetControlExpression(1, "Shift"); // Grapple Lasso
 }
 
 Extension* Wiimote::GetNoneExtension() const
@@ -830,12 +994,18 @@ void Wiimote::RefreshConfig()
 
 void Wiimote::StepDynamics()
 {
-  EmulateSwing(&m_swing_state, m_swing, 1.f / ::Wiimote::UPDATE_FREQ);
-  EmulateTilt(&m_tilt_state, m_tilt, 1.f / ::Wiimote::UPDATE_FREQ);
-  EmulatePoint(&m_point_state, m_ir, m_input_override_function, 1.f / ::Wiimote::UPDATE_FREQ);
-  EmulateShake(&m_shake_state, m_shake, 1.f / ::Wiimote::UPDATE_FREQ);
-  EmulateIMUCursor(&m_imu_cursor_state, m_imu_ir, m_imu_accelerometer, m_imu_gyroscope,
-                   1.f / ::Wiimote::UPDATE_FREQ);
+  // Ensure no motion settings interfere with PrimeHack
+  if (using_metroid_ui) {
+    m_point_state.position = {0, 2.f, 0}; // Centre
+  }
+  else {
+    EmulateSwing(&m_swing_state, m_swing, 1.f / ::Wiimote::UPDATE_FREQ);
+    EmulateTilt(&m_tilt_state, m_tilt, 1.f / ::Wiimote::UPDATE_FREQ);
+    EmulatePoint(&m_point_state, m_ir, m_input_override_function, 1.f / ::Wiimote::UPDATE_FREQ);
+    EmulateShake(&m_shake_state, m_shake, 1.f / ::Wiimote::UPDATE_FREQ);
+    EmulateIMUCursor(&m_imu_cursor_state, m_imu_ir, m_imu_accelerometer, m_imu_gyroscope,
+                     1.f / ::Wiimote::UPDATE_FREQ);
+  }
 }
 
 Common::Vec3 Wiimote::GetAcceleration(Common::Vec3 extra_acceleration) const
@@ -962,6 +1132,121 @@ Common::Matrix44 Wiimote::GetTotalTransformation() const
   return GetTransformation(Common::Matrix33::FromQuaternion(
       m_imu_cursor_state.rotation *
       Common::Quaternion::RotateX(m_imu_cursor_state.recentered_pitch)));
+}
+
+void Wiimote::ChangeUIPrimeHack(bool useMetroidUI)
+{
+  if (using_metroid_ui == useMetroidUI)
+    return;
+
+  // Swap D-Pad Down (Missile) and HOME
+  std::swap(m_buttons->controls[6], m_dpad->controls[1]);
+
+  for (int i = 0; i < 7; i++)
+  {
+    std::string_view ui_name = useMetroidUI ? metroid_named_buttons[i] : named_buttons[i];
+
+    if (ui_name == "Home")
+      ui_name = "HOME";
+
+    m_buttons->controls[i]->ui_name = _trans(ui_name);
+    m_buttons->controls[i]->display_alt = useMetroidUI;
+  }
+
+  if (!useMetroidUI) {
+    // Make sure to revert the D-Pad name
+    m_dpad->controls[1]->ui_name = _trans(named_directions[1]);
+    m_dpad->controls[1]->display_alt = false;
+  }
+
+  using_metroid_ui = useMetroidUI;
+  m_buttons->use_metroid_ui = useMetroidUI;
+}
+
+Nunchuk* Wiimote::GetNunchuk()
+{
+  return static_cast<Nunchuk*>(m_attachments->GetAttachmentList()[ExtensionNumber::NUNCHUK].get());
+}
+
+bool Wiimote::CheckVisorCtrl(int visorcount)
+{
+  return m_primehack_visors->controls[visorcount].get()->control_ref->State() > 0.5;
+}
+
+bool Wiimote::CheckBeamCtrl(int beamcount)
+{
+  return m_primehack_beams->controls[beamcount].get()->control_ref->State() > 0.5;
+}
+
+bool Wiimote::CheckBeamScrollCtrl(bool direction)
+{
+  return m_primehack_beams->controls[direction ? 4 : 5].get()->control_ref->State() > 0.5;
+}
+
+bool Wiimote::CheckVisorScrollCtrl(bool direction)
+{
+  return m_primehack_visors->controls[direction ? 4 : 5].get()->control_ref->State() > 0.5;
+}
+
+// Grapple Lasso
+bool Wiimote::CheckGrappleCtrl()
+{
+  return m_primehack_misc->controls[1].get()->control_ref->State() > 0.5;
+}
+
+bool Wiimote::CheckUseGrappleTapping()
+{
+  return m_primehack_tapping_grapple.GetValue();
+}
+
+bool Wiimote::IsGrappleBinded()
+{
+  return !m_primehack_misc->controls[1].get()->control_ref->GetExpression().empty();
+}
+
+bool Wiimote::CheckImprovedMotions()
+{
+  return m_primehack_improved_motions.GetValue();
+}
+
+bool Wiimote::CheckSpringBallCtrl()
+{
+  return m_primehack_misc->controls[0].get()->control_ref->State() > 0.5;
+}
+
+std::tuple<double, double> Wiimote::GetPrimeStickXY()
+{
+  const auto stick_state = m_primehack_stick->GetState();
+
+  return std::make_tuple(stick_state.x * m_primehack_horizontal_sensitivity.GetValue(), stick_state.y * -m_primehack_vertical_sensitivity.GetValue());
+}
+
+bool Wiimote::CheckPitchRecentre()
+{
+  return m_primehack_stick->controls[5]->GetState() > 0.5;
+}
+
+std::tuple<bool, bool> Wiimote::GetBVMenuOptions()
+{
+  return std::make_tuple(m_primehack_beam_menu.GetValue(), m_primehack_visor_menu.GetValue());
+}
+
+bool Wiimote::PrimeControllerMode()
+{
+  return m_primehack_modes->GetSelectedDevice() == 1;
+}
+
+std::tuple<double, double, bool, bool, bool, bool, bool> Wiimote::GetPrimeSettings()
+{
+  std::tuple t =
+      std::make_tuple(m_primehack_camera_sensitivity.GetValue(),
+                      m_primehack_cursor_sensitivity.GetValue(),
+                      m_primehack_invert_x.GetValue(), m_primehack_invert_y.GetValue(),
+                      m_primehack_scalesens.GetValue(),
+                      m_primehack_movereticle.GetValue(),
+                      m_primehack_remap_map_controls.GetValue());
+
+  return t;
 }
 
 }  // namespace WiimoteEmu

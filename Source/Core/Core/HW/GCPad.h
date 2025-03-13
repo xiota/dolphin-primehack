@@ -30,4 +30,21 @@ void Rumble(int pad_num, ControlState strength);
 void ResetRumble(int pad_num);
 
 bool GetMicButton(int pad_num);
+
+void ChangeUIPrimeHack(int number, bool useMetroidUI);
+
+bool CheckPitchRecentre();
+bool PrimeUseController();
+
+void PrimeSetMode(bool controller);
+
+bool CheckForward();
+bool CheckBack();
+bool CheckLeft();
+bool CheckRight();
+bool CheckJump();
+
+std::tuple<double, double> GetPrimeStickXY();
+
+std::tuple<double, double, bool, bool, bool> PrimeSettings();
 }  // namespace Pad
