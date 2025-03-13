@@ -5,10 +5,10 @@ This repo is organized into branches as follows:
 
 * `main` – Contains this document and license information.
 * `dolphin` – Synced with upstream Dolphin.
-    * Some commits are tagged `#.#.#` for reference.
-    * They do not correspond with upstream tags.
-    * They do not follow semver conventions.
-* `primehack-#.#.#` – Contain the PrimeHack patches rebased to tagged commits.
-* `primehack-aur` – Synced with the latest `primehack-#.#.#` branch.
+    * Some commits are tagged for reference.
+    * They may not correspond with upstream tags.
+    * They may not follow semver conventions.
+* `primehack-#` – Contain the PrimeHack patches rebased to tagged commits.
+* `primehack-aur` – Synced with the latest `primehack-#` branch.
     * This is the branch the AUR package builds from.
 * `wip` – Testing and staging.  Not for general use.  Frequently rebased and force pushed.  
