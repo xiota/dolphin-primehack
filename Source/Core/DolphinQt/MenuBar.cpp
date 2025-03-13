@@ -54,6 +54,8 @@
 #include "Core/TitleDatabase.h"
 #include "Core/WiiUtils.h"
 
+#include "Core/PrimeHack/HackConfig.h"
+
 #include "DiscIO/Enums.h"
 #include "DiscIO/NANDImporter.h"
 #include "DiscIO/WiiSaveBanner.h"
@@ -93,6 +95,8 @@ MenuBar::MenuBar(QWidget* parent) : QMenuBar(parent)
   AddJITMenu();
   AddSymbolsMenu();
   AddHelpMenu();
+  AddModLoaderMenu();
+  AddPrimeHackMenu();
 
   connect(&Settings::Instance(), &Settings::EmulationStateChanged, this,
           [=, this](Core::State state) { OnEmulationStateChanged(state); });
@@ -663,6 +667,39 @@ void MenuBar::AddHelpMenu()
 #endif
 
   help_menu->addAction(tr("&About"), this, &MenuBar::ShowAboutDialog);
+}
+
+void MenuBar::AddModLoaderMenu() {
+  QMenu* mod_loader_menu = addMenu(tr("Mod &Loader"));
+
+  QAction* load_mod = mod_loader_menu->addAction(tr("Load Mod"));
+  connect(load_mod, &QAction::triggered, this, [this]() {
+    QString path = QFileDialog::getOpenFileName(this, tr("Select MMD file to load"), QString(),
+                                                tr("MMD file (*.mmd);; All Files (*)"));
+    prime::SetPendingModfile(path.toStdString());
+  });
+
+  mod_loader_menu->addAction(tr("CVars"), this, &MenuBar::OpenCVarsMenu);
+  QAction* suspend = mod_loader_menu->addAction(tr("Suspend Mod"));
+  suspend->setCheckable(true);
+  suspend->setChecked(false);
+  connect(suspend, &QAction::toggled, [](bool value) {
+    if (value) {
+      prime::SuspendMod();
+    } else {
+      prime::ResumeMod();
+    }
+  });
+}
+
+void MenuBar::AddPrimeHackMenu() {
+  QMenu* primehack_menu = addMenu(tr("PrimeHack"));
+
+  primehack_menu->addAction(tr("&Discord"), this,
+    []() { QDesktopServices::openUrl(QUrl(QStringLiteral("https://discord.gg/ZbeKZxDb6W"))); });
+
+  primehack_menu->addAction(tr("&Wiki / Help"), this,
+    []() { QDesktopServices::openUrl(QUrl(QStringLiteral("https://github.com/shiiion/dolphin/wiki"))); });
 }
 
 void MenuBar::AddGameListTypeSection(QMenu* view_menu)

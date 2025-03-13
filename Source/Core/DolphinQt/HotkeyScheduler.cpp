@@ -23,6 +23,8 @@
 #include "Core/Config/GraphicsSettings.h"
 #include "Core/Config/MainSettings.h"
 #include "Core/Config/UISettings.h"
+#include "Core/ConfigManager.h"
+#include "Core/Config/MainSettings.h"
 #include "Core/Core.h"
 #include "Core/FreeLookManager.h"
 #include "Core/Host.h"
@@ -627,6 +629,47 @@ void HotkeyScheduler::Run()
         OSD::AddMessage("Free Look is Disabled in Hardcore Mode");
       else
         OSD::AddMessage(fmt::format("Free Look: {}", new_value ? "Enabled" : "Disabled"));
+    }
+
+    // PrimeHack
+    if (Config::Get(Config::MAIN_ENABLE_CHEATS)) {
+      if (IsHotkey(HK_NOCLIP_TOGGLE))
+      {
+        const bool new_value = !Config::Get(Config::PRIMEHACK_NOCLIP);
+        Config::SetBaseOrCurrent(Config::PRIMEHACK_NOCLIP, new_value);
+
+        OSD::AddMessage(StringFromFormat("Noclip: %s", new_value ? "Enabled" : "Disabled"));
+      }
+
+      if (IsHotkey(HK_INVULNERABILITY_TOGGLE))
+      {
+        const bool new_value = !Config::Get(Config::PRIMEHACK_INVULNERABILITY);
+        Config::SetBaseOrCurrent(Config::PRIMEHACK_INVULNERABILITY, new_value);
+      }
+
+      if (IsHotkey(HK_SKIP_CUTSCENE))
+      {
+        const bool new_value = !Config::Get(Config::PRIMEHACK_SKIPPABLE_CUTSCENES);
+        Config::SetBaseOrCurrent(Config::PRIMEHACK_SKIPPABLE_CUTSCENES, new_value);
+
+        OSD::AddMessage(StringFromFormat("Skippable Cutscenes: %s", new_value ? "Enabled" : "Disabled"));
+      }
+
+      if (IsHotkey(HK_RESTORE_DASHING))
+      {
+        const bool new_value = !Config::Get(Config::PRIMEHACK_RESTORE_SCANDASH);
+        Config::SetBaseOrCurrent(Config::PRIMEHACK_RESTORE_SCANDASH, new_value);
+
+        OSD::AddMessage(StringFromFormat("Restore Dashing: %s", new_value ? "Enabled" : "Disabled"));
+      }
+    }
+
+    if (IsHotkey(HK_MOTION_LOCK))
+    {
+      const bool new_value = !Config::Get(Config::LOCKCAMERA_IN_PUZZLES);
+      Config::SetCurrent(Config::LOCKCAMERA_IN_PUZZLES, new_value);
+
+      OSD::AddMessage(StringFromFormat("Lock Camera in Motions: %s", new_value ? "Enabled" : "Disabled"));
     }
 
     // Savestates

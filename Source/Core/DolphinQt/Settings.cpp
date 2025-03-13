@@ -35,6 +35,7 @@
 #include "Core/NetPlayClient.h"
 #include "Core/NetPlayServer.h"
 #include "Core/System.h"
+#include "Core/PrimeHack/HackConfig.h"
 
 #include "DolphinQt/Host.h"
 #include "DolphinQt/QtUtils/QueueOnObject.h"
@@ -393,12 +394,20 @@ void Settings::SetStateSlot(int slot)
 
 Config::ShowCursor Settings::GetCursorVisibility() const
 {
+  if (!prime::ControllerMode()) {
+    return Config::ShowCursor::Never;
+  }
+
   return Config::Get(Config::MAIN_SHOW_CURSOR);
 }
 
 bool Settings::GetLockCursor() const
 {
-  return Config::Get(Config::MAIN_LOCK_CURSOR);
+  if (prime::ControllerMode()) {
+    return Config::Get(Config::MAIN_LOCK_CURSOR);
+  }
+
+  return true;
 }
 
 void Settings::SetKeepWindowOnTop(bool top)
@@ -510,6 +519,11 @@ void Settings::ResetNetPlayServer(NetPlay::NetPlayServer* server)
 bool Settings::GetCheatsEnabled() const
 {
   return Config::Get(Config::MAIN_ENABLE_CHEATS);
+}
+
+bool Settings::GetPrimeEnabled() const
+{
+  return Config::Get(Config::PRIMEHACK_ENABLE);
 }
 
 void Settings::SetDebugModeEnabled(bool enabled)
