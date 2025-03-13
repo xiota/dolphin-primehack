@@ -156,6 +156,8 @@ public:
   void Reset() override;
   void DoState(PointerWrap& p) override;
 
+  void ChangeUIPrimeHack(bool useMetroidUI);
+
   ControllerEmu::ControlGroup* GetGroup(NunchukGroup group);
 
   void LoadDefaults(const ControllerInterface& ciface) override;
@@ -180,6 +182,8 @@ public:
   static constexpr const char* Z_BUTTON = "Z";
 
 private:
+  bool using_metroid_ui = false;
+
   ControllerEmu::Tilt* m_tilt;
   ControllerEmu::Force* m_swing;
   ControllerEmu::Shake* m_shake;
