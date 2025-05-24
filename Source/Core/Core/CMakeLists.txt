@@ -563,6 +563,8 @@ add_library(core
   PrimeHack/PrimeUtils.h
   PrimeHack/PrimeMod.cpp
   PrimeHack/Mods/AutoEFB.cpp
+	PrimeHack/Mods/AutoFogToggleMP3.cpp
+	PrimeHack/Mods/AutoFogToggleMP3.h
   PrimeHack/Mods/BloomIntensityMP3.cpp
   PrimeHack/Mods/CutBeamFxMP1.cpp
   PrimeHack/Mods/DisableBloom.h
