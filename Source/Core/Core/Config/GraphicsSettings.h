@@ -204,6 +204,7 @@ extern const Info<bool> TOGGLE_CULLING;
 extern const Info<bool> ENABLE_SECONDARY_GUNFX;
 extern const Info<bool> GC_SHOW_CROSSHAIR;
 extern const Info<int> GC_CROSSHAIR_COLOR_RGBA;
+extern const Info<bool> AUTO_FOG_TOGGLE_MP3;
 
 extern const Info<int> ARMPOSITION_MODE;
 extern const Info<int> ARMPOSITION_LEFTRIGHT;

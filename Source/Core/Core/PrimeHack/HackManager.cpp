@@ -200,6 +200,7 @@ void HackManager::run_active_mods(const Core::CPUThreadGuard& cpu_guard) {
 void HackManager::update_mod_states() {
   set_mod_enabled("auto_efb", UseMPAutoEFB());
   set_mod_enabled("cut_beam_fx_mp1", GetEnableSecondaryGunFX());
+  set_mod_enabled("auto_fog_toggle_mp3", GetAutoFogToggleEnabled());
 
   if (Config::Get(Config::MAIN_ENABLE_CHEATS)) {
     set_mod_enabled("noclip", Config::Get(Config::PRIMEHACK_NOCLIP));

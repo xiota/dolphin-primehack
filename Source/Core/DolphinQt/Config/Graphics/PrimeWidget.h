@@ -36,6 +36,7 @@ private:
   ConfigBool* m_motions_lock;
   ConfigBool* m_toggle_culling;
   ConfigBool* m_toggle_secondaryFX;
+  ConfigBool* m_autofogtoggle_mp3;
 
   ConfigInteger* fov_counter;
   ConfigSlider* m_fov_axis;

@@ -61,11 +61,14 @@ void PrimeWidget::CreateWidgets()
       new ConfigBool(tr("Enable GCN Gun Effects"), Config::ENABLE_SECONDARY_GUNFX);
   m_toggle_gc_show_crosshair =
       new ConfigBool(tr("Show GCN Crosshair"), Config::GC_SHOW_CROSSHAIR);
+  m_autofogtoggle_mp3 =
+      new ConfigBool(tr("Disable Fog in Scan Visor [Prime 3]"), Config::AUTO_FOG_TOGGLE_MP3);
 
   graphics_layout->addWidget(m_motions_lock, 1, 0);
   graphics_layout->addWidget(m_toggle_secondaryFX, 2, 0);
   graphics_layout->addWidget(m_toggle_arm_position, 3, 0);
   graphics_layout->addWidget(m_toggle_culling, 4, 0);
+  graphics_layout->addWidget(m_autofogtoggle_mp3, 5, 0);
 
   m_fov_axis = new ConfigSlider(1, 170, Config::FOV);
   m_fov_axis->setMaximumWidth(200);
@@ -284,6 +287,10 @@ void PrimeWidget::AddDescriptions()
                  "disable culling and modify the znear values in the game. The higher the FOV, the "
                  "more glitches you may encounter."
                  "\n\nGenerally the best FOV values are between 75 and 100.");
+  static const char TR_AUTOFOG[] =
+      QT_TR_NOOP("Hack fix which toggles fog off only when in scan visor.\n\n"
+                 "Fixes Prime 3 issue where menu background is filled with the fog color.\n\n"
+                 "By Timdeuces.");
 
   m_motions_lock->SetDescription(tr(TR_MOTION_LOCK));
   m_toggle_secondaryFX->SetDescription(tr(TR_GUNEFFECTS));
@@ -299,4 +306,5 @@ void PrimeWidget::AddDescriptions()
   m_x_axis->SetDescription(tr(TR_Z_AXIS));
   m_fov_axis->SetDescription(tr(TR_FOV));
   fov_counter->SetDescription(tr(TR_FOV));
+  m_autofogtoggle_mp3->SetDescription(tr(TR_AUTOFOG));
 }

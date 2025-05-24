@@ -14,6 +14,7 @@
 #include "Core/PrimeHack/EmuVariableManager.h"
 
 #include "Core/PrimeHack/Mods/AutoEFB.h"
+#include "Core/PrimeHack/Mods/AutoFogToggleMP3.h"
 #include "Core/PrimeHack/Mods/CutBeamFxMP1.h"
 #include "Core/PrimeHack/Mods/DisableBloom.h"
 #include "Core/PrimeHack/Mods/BloomIntensityMP3.h"
@@ -83,6 +84,7 @@ void InitializeHack() {
 
   // Create all mods
   hack_mgr.add_mod("auto_efb", std::make_unique<AutoEFB>());
+  hack_mgr.add_mod("auto_fog_toggle_mp3", std::make_unique<AutoFogToggleMP3>());
   hack_mgr.add_mod("cut_beam_fx_mp1", std::make_unique<CutBeamFxMP1>());
   hack_mgr.add_mod("bloom_modifier", std::make_unique<DisableBloom>());
   hack_mgr.add_mod("bloom_intensity", std::make_unique<BloomIntensityMP3>());
@@ -206,6 +208,21 @@ bool GrappleCtlBound() {
 
 void SetEFBToTexture(bool toggle) {
   return Config::SetCurrent(Config::GFX_HACK_SKIP_EFB_COPY_TO_RAM, toggle);
+}
+
+bool GetFogDisabled()
+{
+  return Config::Get(Config::GFX_DISABLE_FOG);
+}
+
+void SetFogDisabled(bool toggle)
+{
+  Config::SetCurrent(Config::GFX_DISABLE_FOG, toggle);
+}
+
+bool GetAutoFogToggleEnabled()
+{
+  return Config::Get(Config::AUTO_FOG_TOGGLE_MP3);
 }
 
 bool UseMPAutoEFB() {
