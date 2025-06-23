@@ -11,41 +11,6 @@ namespace {
 constexpr u32 kAgonWorldId = 0x42b935e4;
 constexpr u32 kTorvusWorldId = 0x3dfd2249;
 constexpr u32 kSanctuaryWorldId = 0x1baa96c2;
-
-void fix_layer_bits(PowerPC::PowerPCState& ppc_state, PowerPC::MMU& mmu, u32 param) {
-  PortalSkipMP2* mod = static_cast<PortalSkipMP2*>(GetHackManager()->get_mod("portal_skip_mp2"));
-  if (mod != nullptr) {
-    Core::CPUThreadGuard guard(Core::System::GetInstance());
-    mod->set_temporary_cpu_guard(&guard);
-    mod->fix_portal_terminal_layer_bits();
-    mod->set_temporary_cpu_guard(nullptr);
-  }
-
-  // Original instruction: mr r3, r30
-  ppc_state.gpr[3] = ppc_state.gpr[30];
-}
-}
-
-// Stupid cutscene that we cut out sets some layer bits
-void PortalSkipMP2::fix_portal_terminal_layer_bits() {
-  LOOKUP_DYN(world_id);
-  LOOKUP_DYN(area_id);
-  LOOKUP_DYN(area_layers_vector);
-
-  if (read32(world_id) == kAgonWorldId &&
-      read32(area_id) == 0x12) {
-    const u32 layer_bits_addr = 0x10 * 0x12 + area_layers_vector + 0x8;
-    u64 layer_bits = read64(layer_bits_addr);
-
-    // 2nd, 3rd, and 4th pass layers are OFF
-    if ((layer_bits & 0x6008) == 0) {
-      // mask ON 2nd pass, portal 2nd pass
-      // mask OFF portal cinematics
-      layer_bits |= 0x8008;
-      layer_bits &= ~0x40;
-      write64(layer_bits, layer_bits_addr);
-    }
-  }
 }
 
 void PortalSkipMP2::run_mod(Game game, Region region) {
@@ -54,6 +19,8 @@ void PortalSkipMP2::run_mod(Game game, Region region) {
   }
 
   LOOKUP_DYN(world_id);
+  LOOKUP_DYN(area_id);
+  LOOKUP_DYN(area_layers_vector);
 
   LOOKUP_DYN(object_list);
   if (object_list == 0) {
@@ -61,6 +28,27 @@ void PortalSkipMP2::run_mod(Game game, Region region) {
   }
 
   const u32 mlvl_id = read32(world_id);
+  const u32 mrea_id = read32(area_id);
+  if (mlvl_id == kAgonWorldId) {
+    // Light agon portal terminal
+    if (mrea_id == 0x12) {
+      // Don't mess with cinematics if the cutscene hasn't been seen yet
+      // Obviously there was more complexity here than I'd initially thought
+      // and have fucked up many a savefile with this stupid cheat
+      u64 layer_bits = read64(0x10 * 0x12 + area_layers_vector + 0x8);
+      if (!(layer_bits & 0x8)) {
+        return;
+      }
+    }
+    // Dark agon portal site
+    if (mrea_id == 0x1c) {
+      u64 layer_bits = read64(0x10 * 0x1c + area_layers_vector + 0x8);
+      if (layer_bits & 0x20) {
+        return;
+      }
+    }
+  }
+
   auto wpc_iter = portal_control_map.find(mlvl_id);
   if (wpc_iter == portal_control_map.end()) {
     return;
@@ -71,7 +59,7 @@ void PortalSkipMP2::run_mod(Game game, Region region) {
   if (player == 0) {
     return;
   }
-  const u32 area_id = read32(player + 4);
+  const u32 tarea_id = read32(player + 4);
 
   const auto find_object = [this, object_list](u32 editor_id) -> u32 {
     for (int i = 0; i < 1024; i++) {
@@ -88,7 +76,7 @@ void PortalSkipMP2::run_mod(Game game, Region region) {
   LOOKUP(seq_timer_fire_size);
   LOOKUP(seq_timer_time_offset);
   for (const PortalControl& pc : world_portal_controls) {
-    if (((pc.scan_eid >> 16) & 0x3ff) == area_id) {
+    if (((pc.scan_eid >> 16) & 0x3ff) == tarea_id) {
       const u32 scan_obj = find_object(pc.scan_eid);
       if (scan_obj == 0) { continue; }
       const u32 seq_timer_obj = find_object(pc.seq_timer_eid);
@@ -147,29 +135,19 @@ void PortalSkipMP2::run_mod(Game game, Region region) {
 
 bool PortalSkipMP2::init_mod(Game game, Region region) {
   if (game == Game::PRIME_2) {
-    const int fix_portal_terminal_fn = Core::System::GetInstance().GetPowerPC().RegisterVmcall(fix_layer_bits);
-    const u32 fix_vmc = gen_vmcall(fix_portal_terminal_fn, 0);
     if (region == Region::NTSC_U) {
-      add_code_change(0x801e6948, fix_vmc, "disable_portal_cutscene");
       add_code_change(0x801e695c, 0x48000114, "disable_portal_cutscene");
     } else if (region == Region::PAL) {
-      add_code_change(0x801e8e60, fix_vmc, "disable_portal_cutscene");
       add_code_change(0x801e8e74, 0x48000114, "disable_portal_cutscene");
     } else { // region == Region::NTSC_J
-      add_code_change(0x801e5948, fix_vmc, "disable_portal_cutscene");
       add_code_change(0x801e5950, 0x48000114, "disable_portal_cutscene");
     }
   } else if (game == Game::PRIME_2_GCN) {
-    const int fix_portal_terminal_fn = Core::System::GetInstance().GetPowerPC().RegisterVmcall(fix_layer_bits);
-    const u32 fix_vmc = gen_vmcall(fix_portal_terminal_fn, 0);
     if (region == Region::NTSC_U) {
-      add_code_change(0x800b7194, fix_vmc, "disable_portal_cutscene");
       add_code_change(0x800b71ac, 0x48000120, "disable_portal_cutscene");
     } else if (region == Region::PAL) {
-      add_code_change(0x800b7228, fix_vmc, "disable_portal_cutscene");
       add_code_change(0x800b7240, 0x48000120, "disable_portal_cutscene");
     } else { // region == Region::NTSC_J
-      add_code_change(0x800b7f24, fix_vmc, "disable_portal_cutscene");
       add_code_change(0x800b7f3c, 0x48000120, "disable_portal_cutscene");
     }
   } else {
