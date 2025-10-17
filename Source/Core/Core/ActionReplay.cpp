@@ -45,6 +45,8 @@
 #include "Core/Debugger/PPCDebugInterface.h"
 #include "Core/PowerPC/MMU.h"
 
+#include "PrimeHack/HackConfig.h"
+
 namespace ActionReplay
 {
 enum
@@ -1001,6 +1003,8 @@ static bool RunCodeLocked(const Core::CPUThreadGuard& guard, const ARCode& arcod
 
 void RunAllActive(const Core::CPUThreadGuard& cpu_guard)
 {
+  prime::GetHackManager()->run_active_mods(cpu_guard);
+
   if (!Config::AreCheatsEnabled())
     return;
 
