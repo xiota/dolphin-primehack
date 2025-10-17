@@ -135,6 +135,7 @@ bool SIDevice_IsGCController(SIDevices type)
   switch (type)
   {
   case SIDEVICE_GC_CONTROLLER:
+  case SIDEVICE_GC_METROID:
   case SIDEVICE_WIIU_ADAPTER:
   case SIDEVICE_GC_TARUKONGA:
   case SIDEVICE_DANCEMAT:
@@ -151,6 +152,7 @@ std::unique_ptr<ISIDevice> SIDevice_Create(Core::System& system, const SIDevices
 {
   switch (device)
   {
+  case SIDEVICE_GC_METROID:
   case SIDEVICE_GC_CONTROLLER:
     return std::make_unique<CSIDevice_GCController>(system, device, port_number);
 
