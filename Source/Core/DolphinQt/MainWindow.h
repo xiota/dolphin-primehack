@@ -56,6 +56,7 @@ class WatchWidget;
 class WiiTASInputWindow;
 class WiiSpeakWindow;
 struct WindowSystemInfo;
+class CVarsWindow;
 
 namespace Core
 {
@@ -163,6 +164,8 @@ private:
   void ShowRenderWidget();
   void HideRenderWidget(bool reinit = true, bool is_exit = false);
 
+  void OpenCVarsMenu();
+
   void ShowSettingsWindow();
   void ShowGeneralWindow();
   void ShowAudioWindow();
@@ -253,6 +256,7 @@ private:
   WiiSpeakWindow* m_wii_speak_window = nullptr;
   MappingWindow* m_hotkey_window = nullptr;
   FreeLookWindow* m_freelook_window = nullptr;
+  CVarsWindow* m_cvars_window = nullptr;
 
   HotkeyScheduler* m_hotkey_scheduler;
   NetPlayDialog* m_netplay_dialog;
