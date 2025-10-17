@@ -51,6 +51,8 @@ enum class GroupType
   IMUGyroscope,
   IMUCursor,
   IRPassthrough,
+  PrimeHackMode,
+  PrimeHackAltProfile
 };
 
 class ControlGroup
@@ -109,6 +111,8 @@ public:
   const DefaultValue default_value;
   SettingValue<bool> enabled;
   std::unique_ptr<NumericSetting<bool>> enabled_setting;
+
+  bool use_metroid_ui = false;
 
   std::vector<std::unique_ptr<Control>> controls;
   std::vector<std::unique_ptr<NumericSettingBase>> numeric_settings;
