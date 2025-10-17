@@ -14,15 +14,18 @@
 #include <utility>
 #include <vector>
 
+#include "Common/Config/Config.h"
 #include "Core/ConfigManager.h"
 #include "Core/Core.h"
 #include "Core/HW/SI/SI.h"
 #include "Core/HW/SI/SI_Device.h"
+#include "Core/HW/GCPad.h"
 #include "Core/NetPlayProto.h"
 #include "Core/System.h"
 
 #include "DolphinQt/Config/Mapping/GCPadWiiUConfigDialog.h"
 #include "DolphinQt/Config/Mapping/MappingWindow.h"
+#include "DolphinQt/QtUtils/ModalMessageBox.h"
 #include "DolphinQt/QtUtils/NonDefaultQPushButton.h"
 #include "DolphinQt/QtUtils/SetWindowDecorations.h"
 #include "DolphinQt/QtUtils/SignalBlocking.h"
@@ -36,6 +39,7 @@ static constexpr std::array s_gc_types = {
     SIDeviceName{SerialInterface::SIDEVICE_GC_CONTROLLER, _trans("Standard Controller")},
     SIDeviceName{SerialInterface::SIDEVICE_WIIU_ADAPTER,
                  _trans("GameCube Controller Adapter (USB)")},
+    SIDeviceName{SerialInterface::SIDEVICE_GC_METROID, _trans("Metroid Controller")},
     SIDeviceName{SerialInterface::SIDEVICE_GC_STEERING, _trans("Steering Wheel")},
     SIDeviceName{SerialInterface::SIDEVICE_DANCEMAT, _trans("Dance Mat")},
     SIDeviceName{SerialInterface::SIDEVICE_GC_TARUKONGA, _trans("DK Bongos")},
@@ -136,6 +140,11 @@ void GamecubeControllersWidget::OnGCPadConfigure(size_t index)
     return;
   case SerialInterface::SIDEVICE_GC_CONTROLLER:
     type = MappingWindow::Type::MAPPING_GCPAD;
+    Pad::ChangeUIPrimeHack(static_cast<int>(index), false);
+    break;
+  case SerialInterface::SIDEVICE_GC_METROID:
+    type = MappingWindow::Type::MAPPING_GCPAD_METROID;
+    Pad::ChangeUIPrimeHack(static_cast<int>(index), true);
     break;
   case SerialInterface::SIDEVICE_WIIU_ADAPTER:
   {
@@ -161,6 +170,19 @@ void GamecubeControllersWidget::OnGCPadConfigure(size_t index)
     break;
   default:
     return;
+  }
+
+  if (type == MappingWindow::Type::MAPPING_GCPAD) {
+    if (!Config::Get(Config::PRIMEHACK_PROMPT_TAB))
+    {
+      if (ModalMessageBox::primehack_gctab(this)) {
+        type = MappingWindow::Type::MAPPING_GCPAD_METROID;
+        Pad::ChangeUIPrimeHack(static_cast<int>(index), true);
+        m_gc_controller_boxes[index]->setCurrentIndex(2);
+      }
+
+      Config::SetBase(Config::PRIMEHACK_PROMPT_TAB, true);
+    }
   }
 
   MappingWindow* window = new MappingWindow(this, type, static_cast<int>(index));

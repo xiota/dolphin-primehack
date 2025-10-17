@@ -421,6 +421,7 @@ void WiiPane::LoadConfig()
 
   m_wiimote_ir_sensor_position->setCurrentIndex(
       TranslateSensorBarPosition(Config::Get(Config::SYSCONF_SENSOR_BAR_POSITION)));
+
   m_wiimote_ir_sensitivity->setValue(Config::Get(Config::SYSCONF_SENSOR_BAR_SENSITIVITY));
   m_wiimote_speaker_volume->setValue(Config::Get(Config::SYSCONF_SPEAKER_VOLUME));
   m_wiimote_motor->setChecked(Config::Get(Config::SYSCONF_WIIMOTE_MOTOR));

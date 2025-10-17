@@ -15,10 +15,14 @@ public:
                       StandardButtons buttons = Ok, StandardButton default_button = NoButton,
                       Qt::WindowModality modality = Qt::WindowModal,
                       const QString& detailed_text = QString());
+  static void primehack_initialrun(QWidget* parent);
+  static bool primehack_wiitab(QWidget* parent);
+  static bool primehack_gctab(QWidget* parent);
   static int information(QWidget* parent, const QString& title, const QString& text,
                          StandardButtons buttons = Ok, StandardButton default_button = NoButton,
                          Qt::WindowModality modality = Qt::WindowModal,
                          const QString& detailedText = QString());
+  static int primehackInitial();
   static int question(QWidget* parent, const QString& title, const QString& text,
                       StandardButtons buttons = Yes | No, StandardButton default_button = NoButton,
                       Qt::WindowModality modality = Qt::WindowModal,

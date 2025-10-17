@@ -91,6 +91,7 @@ void GeneralPane::OnEmulationStateChanged(Core::State state)
 
   m_checkbox_dualcore->setEnabled(!running);
   m_checkbox_cheats->setEnabled(!running);
+  m_checkbox_primehack->setEnabled(!running);
   m_checkbox_override_region_settings->setEnabled(!running);
 #ifdef USE_DISCORD_PRESENCE
   m_checkbox_discord_presence->setEnabled(!running);
@@ -101,6 +102,8 @@ void GeneralPane::OnEmulationStateChanged(Core::State state)
 void GeneralPane::ConnectLayout()
 {
   connect(m_checkbox_cheats, &QCheckBox::toggled, &Settings::Instance(),
+          &Settings::EnableCheatsChanged);
+  connect(m_checkbox_primehack, &QCheckBox::toggled, &Settings::Instance(),
           &Settings::EnableCheatsChanged);
 #ifdef USE_DISCORD_PRESENCE
   connect(m_checkbox_discord_presence, &QCheckBox::toggled, this, &GeneralPane::OnSaveConfig);
@@ -145,6 +148,9 @@ void GeneralPane::CreateBasic()
 
   m_checkbox_cheats = new ConfigBool(tr("Enable Cheats"), Config::MAIN_ENABLE_CHEATS);
   basic_group_layout->addWidget(m_checkbox_cheats);
+
+  m_checkbox_primehack = new ConfigBool(tr("Enable PrimeHack Controls"), Config::PRIMEHACK_ENABLE);
+  basic_group_layout->addWidget(m_checkbox_primehack);
 
   m_checkbox_override_region_settings =
       new ConfigBool(tr("Allow Mismatched Region Settings"), Config::MAIN_OVERRIDE_REGION_SETTINGS);
@@ -282,9 +288,9 @@ void GeneralPane::LoadConfig()
     SignalBlocking(m_combobox_fallback_region)->setCurrentIndex(FALLBACK_REGION_NTSCJ_INDEX);
 }
 
-static QString UpdateTrackFromIndex(int index)
-{
-  QString value;
+  static QString UpdateTrackFromIndex(int index)
+  {
+    QString value;
 
   switch (index)
   {
@@ -379,6 +385,10 @@ void GeneralPane::AddDescriptions()
       "These codes can be configured with the Cheats Manager in the Tools menu."
       "<br><br>This setting cannot be changed while emulation is active."
       "<br><br><dolphin_emphasis>If unsure, leave this unchecked.</dolphin_emphasis>");
+  static constexpr char TR_PRIMEHACK_DESCRIPTION[] = QT_TR_NOOP(
+      "Enables PrimeHack mouselook controls.  PrimeHack GFX will still work."
+      "<br><br>This setting cannot be changed while emulation is active."
+      "<br><br><dolphin_emphasis>If unsure, leave this unchecked.</dolphin_emphasis>");
   static constexpr char TR_OVERRIDE_REGION_SETTINGS_DESCRIPTION[] =
       QT_TR_NOOP("Lets you use languages and other region-related settings that the game may not "
                  "be designed for. May cause various crashes and bugs."
@@ -442,6 +452,8 @@ void GeneralPane::AddDescriptions()
   m_checkbox_dualcore->SetDescription(tr(TR_DUALCORE_DESCRIPTION));
 
   m_checkbox_cheats->SetDescription(tr(TR_CHEATS_DESCRIPTION));
+
+  m_checkbox_primehack->SetDescription(tr(TR_PRIMEHACK_DESCRIPTION));
 
   m_checkbox_override_region_settings->SetDescription(tr(TR_OVERRIDE_REGION_SETTINGS_DESCRIPTION));
 
