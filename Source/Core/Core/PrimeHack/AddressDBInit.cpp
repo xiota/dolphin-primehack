@@ -149,7 +149,8 @@ void init_db(AddressDB& addr_db) {
   addr_db.register_dynamic_address(Game::PRIME_2, "angular_momentum", "player", {mrt1(0x178)});
   addr_db.register_dynamic_address(Game::PRIME_2, "firstperson_pitch", "player", {mrt1(0x5f0)});
   addr_db.register_dynamic_address(Game::PRIME_2, "armcannon_matrix", "player", {mrt1(0xea8), mrt1(0x3b0)});
-  addr_db.register_dynamic_address(Game::PRIME_2, "ball_state", "player", {mrt1(0x374)});
+  addr_db.register_dynamic_address(Game::PRIME_2, "ball_state", "player", {mrt1(0x378)});
+  addr_db.register_dynamic_address(Game::PRIME_2, "screw_state", "player", {mrt1(0x37c)});
   addr_db.register_dynamic_address(Game::PRIME_2, "powerups_array", "player", {mrt1(0x12ec), rt0});
   addr_db.register_dynamic_address(Game::PRIME_2, "active_visor", "powerups_array", {mrt1(0x34)});
   addr_db.register_dynamic_address(Game::PRIME_2, "world_id", "world_id_ptr", {rt0, rt0});
@@ -177,6 +178,7 @@ void init_db(AddressDB& addr_db) {
   addr_db.register_dynamic_address(Game::PRIME_2_GCN, "orbit_state", "player", {mrt1(0x3a4)});
   addr_db.register_dynamic_address(Game::PRIME_2_GCN, "firstperson_pitch", "player", {mrt1(0x604)});
   addr_db.register_dynamic_address(Game::PRIME_2_GCN, "ball_state", "player", {mrt1(0x38c)});
+  addr_db.register_dynamic_address(Game::PRIME_2_GCN, "screw_state", "player", {mrt1(0x390)});
   addr_db.register_dynamic_address(Game::PRIME_2_GCN, "angular_vel", "player", {mrt1(0x1bc)});
   addr_db.register_dynamic_address(Game::PRIME_2_GCN, "world_id", "world", {mrt1(0x8)});
   addr_db.register_dynamic_address(Game::PRIME_2_GCN, "area_id", "state_manager", {mrt1(0x16a0)});
@@ -210,6 +212,7 @@ void init_db(AddressDB& addr_db) {
   addr_db.register_dynamic_address(Game::PRIME_3, "beamvisor_menu_state", "beamvisor_menu_base", {rt0, mrt1(0x300)});
   addr_db.register_dynamic_address(Game::PRIME_3, "angular_momentum", "player", {mrt1(0x174)});
   addr_db.register_dynamic_address(Game::PRIME_3, "ball_state", "player", {mrt1(0x358)});
+  addr_db.register_dynamic_address(Game::PRIME_3, "screw_state", "player", {mrt1(0x35c)});
   addr_db.register_dynamic_address(Game::PRIME_3, "lockon_type", "player", {mrt1(0x370)});
   addr_db.register_dynamic_address(Game::PRIME_3, "audio_manager", "state_manager", {mrt1(0x250), rt0});
   addr_db.register_dynamic_address(Game::PRIME_3, "audio_fadein_time", "audio_manager", {mrt1(0x308)});
@@ -242,6 +245,7 @@ void init_db(AddressDB& addr_db) {
   addr_db.register_dynamic_address(Game::PRIME_3_STANDALONE, "active_visor", "powerups_array", {mrt1(0x34)});
   addr_db.register_dynamic_address(Game::PRIME_3_STANDALONE, "angular_momentum", "player", {mrt1(0x174)});
   addr_db.register_dynamic_address(Game::PRIME_3_STANDALONE, "ball_state", "player", {mrt1(0x358)});
+  addr_db.register_dynamic_address(Game::PRIME_3_STANDALONE, "screw_state", "player", {mrt1(0x35c)});
   addr_db.register_dynamic_address(Game::PRIME_3_STANDALONE, "lockon_type", "player", {mrt1(0x370)});
   addr_db.register_dynamic_address(Game::PRIME_3_STANDALONE, "audio_manager", "state_manager", {mrt1(0x250), rt0});
   addr_db.register_dynamic_address(Game::PRIME_3_STANDALONE, "audio_fadein_time", "audio_manager", {mrt1(0x308)});

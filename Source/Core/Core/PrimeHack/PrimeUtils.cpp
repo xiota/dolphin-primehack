@@ -160,10 +160,13 @@ int get_beam_switch(std::array<int, 4> const& beams) {
   return -1;
 }
 
-void swap_alt_profiles(u32 ball_state, u32 transition_state)
+void swap_alt_profiles(u32 ball_state, u32 transition_state, u32 screw_state)
 {
-  /* Ball State 1 - Morphed, Transition State 1 - Map */
-  if ((ball_state == 1 || ball_state == 2 || transition_state == 1) && !was_in_alternate)
+  /* Ball State 1 & Screw State 0 - Morphed, Transition State 1 - Map, Screw State 1 - Screw Attack */
+  const bool morphed = (ball_state == 1 || ball_state == 2 || ball_state == 3) && (screw_state == 0);
+  const bool in_map = (transition_state == 1);
+
+  if ((morphed || in_map) && !was_in_alternate)
   {
     std::string profile = GetProfiles().first;
 
@@ -172,7 +175,7 @@ void swap_alt_profiles(u32 ball_state, u32 transition_state)
     }
     was_in_alternate = true;
   }
-  else if ((ball_state == 0 && transition_state != 1) && was_in_alternate)
+  else if (!(morphed || in_map) && was_in_alternate)
   {
     std::string profile = GetProfiles().second;
 
