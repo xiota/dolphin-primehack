@@ -292,6 +292,16 @@ union UGeckoInstruction
     // Number of bytes to use in lswi/stswi (0 means 32 bytes)
     u32 NB : 5;
   };
+
+  // vmcall
+  struct
+  {
+    u32 : 1;
+    u32 : 10;
+    u32 VMFP : 5;
+    u32 VMFI : 10;
+    u32 : 6; // opcode
+  };
 };
 
 // Precondition: inst is a bx, bcx, bclrx, or bcctrx instruction.

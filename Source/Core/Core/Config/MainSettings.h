@@ -383,6 +383,20 @@ extern const std::array<Info<std::string>, EMULATED_LOGITECH_MIC_COUNT>
 extern const std::array<Info<bool>, EMULATED_LOGITECH_MIC_COUNT> MAIN_LOGITECH_MIC_MUTED;
 extern const std::array<Info<s16>, EMULATED_LOGITECH_MIC_COUNT> MAIN_LOGITECH_MIC_VOLUME_MODIFIER;
 
+// PrimeHack
+extern const Info<bool> PRIMEHACK_ENABLE;
+extern const Info<bool> PRIMEHACK_INITIAL_RUN;
+extern const Info<bool> PRIMEHACK_PROMPT_TAB;
+
+extern const Info<bool> PRIMEHACK_NOCLIP;
+extern const Info<bool> PRIMEHACK_INVULNERABILITY;
+extern const Info<bool> PRIMEHACK_SKIPMP2_PORTAL;
+extern const Info<bool> PRIMEHACK_SKIPPABLE_CUTSCENES;
+extern const Info<bool> PRIMEHACK_RESTORE_SCANDASH;
+extern const Info<bool> PRIMEHACK_FRIENDVOUCHERS;
+extern const Info<bool> PRIMEHACK_DISABLE_HUDMEMO;
+extern const Info<bool> PRIMEHACK_UNLOCK_HYPERMODE;
+
 // GameCube path utility functions
 
 // Replaces NTSC-K with some other region, and doesn't replace non-NTSC-K regions

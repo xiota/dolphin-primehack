@@ -219,8 +219,26 @@ public:
   template <std::unsigned_integral T>
   T Read(const u32 address);
 
+  template <typename T>
+  T Read(const u32 address)
+      requires(!std::unsigned_integral<T>)
+  {
+    using U = Common::MakeUnsignedSameSize<T>;
+    U result = Read<U>(address);
+    return std::bit_cast<T>(result);
+  }
+
   template <std::unsigned_integral T>
   void Write(const Common::MakeAtLeastU32<T> var, const u32 address);
+
+  template <typename T>
+  void Write(const T var, const u32 address)
+      requires (!std::unsigned_integral<T>)
+  {
+      using U = Common::MakeUnsignedSameSize<T>;
+      U cast_var = std::bit_cast<U>(var);
+      return Write<U>(cast_var, address);
+  }
 
   void Write_U16_Swap(u32 var, u32 address);
   void Write_U32_Swap(u32 var, u32 address);
