@@ -135,6 +135,9 @@ signals:
 
   void ConfigureOSD();
 
+  // Mod Loader
+  void OpenCVarsMenu();
+
 private:
   void OnEmulationStateChanged(Core::State state);
   void OnConfigChanged();
@@ -158,6 +161,7 @@ private:
   void AddMovieMenu();
   void AddJITMenu();
   void AddSymbolsMenu();
+  void AddModLoaderMenu();
 
   void UpdateStateSlotMenu();
 

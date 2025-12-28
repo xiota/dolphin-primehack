@@ -17,6 +17,7 @@
 
 class ARCodeWidget;
 class GeckoCodeWidget;
+class PrimeCheatsWidget;
 class CheatSearchFactoryWidget;
 class QDialogButtonBox;
 class QHideEvent;
@@ -72,6 +73,7 @@ private:
 
   ARCodeWidget* m_ar_code = nullptr;
   GeckoCodeWidget* m_gecko_code = nullptr;
+  PrimeCheatsWidget* m_primehack_cheats = nullptr;
   CheatSearchFactoryWidget* m_cheat_search_new = nullptr;
 
   Common::EventHook m_VI_end_field_event;

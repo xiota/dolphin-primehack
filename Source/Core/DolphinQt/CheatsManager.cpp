@@ -19,6 +19,7 @@
 #include "DolphinQt/Config/ARCodeWidget.h"
 #include "DolphinQt/Config/GeckoCodeWidget.h"
 #include "DolphinQt/QtUtils/PartiallyClosableTabWidget.h"
+#include "DolphinQt/Config/PrimeCheatsWidget.h"
 #include "DolphinQt/Settings.h"
 
 #include "VideoCommon/VideoEvents.h"
@@ -127,8 +128,21 @@ void CheatsManager::CreateWidgets()
 
   int tab_index = 0;
 
+  if (m_primehack_cheats)
+  {
+    const int tab_index = m_tab_widget->indexOf(m_primehack_cheats);
+    if (tab_index != -1)
+      m_tab_widget->removeTab(tab_index);
+    m_primehack_cheats->deleteLater();
+    m_primehack_cheats = nullptr;
+  }
+
   m_ar_code = new ARCodeWidget(m_game_id, m_revision, false);
   tab_index = m_tab_widget->addTab(GetWrappedWidget(m_ar_code), tr("AR Code"));
+  m_tab_widget->setTabUnclosable(tab_index);
+
+  m_primehack_cheats = new PrimeCheatsWidget();
+  tab_index = m_tab_widget->addTab(m_primehack_cheats, tr("PrimeHack"));
   m_tab_widget->setTabUnclosable(tab_index);
 
   m_gecko_code = new GeckoCodeWidget(m_game_id, m_game_tdb_id, m_revision, false);

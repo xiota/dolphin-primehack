@@ -57,6 +57,7 @@ class WiiTASInputWindow;
 class WiiSpeakWindow;
 class LogitechMicWindow;
 struct WindowSystemInfo;
+class CVarsWindow;
 
 namespace Core
 {
@@ -164,6 +165,8 @@ private:
   void ShowRenderWidget();
   void HideRenderWidget(bool reinit = true, bool is_exit = false);
 
+  void OpenCVarsMenu();
+
   void ShowSettingsWindow();
   void ShowGeneralWindow();
   void ShowAudioWindow();
@@ -257,6 +260,7 @@ private:
   LogitechMicWindow* m_logitech_mic_window = nullptr;
   MappingWindow* m_hotkey_window = nullptr;
   FreeLookWindow* m_freelook_window = nullptr;
+  CVarsWindow* m_cvars_window = nullptr;
 
   HotkeyScheduler* m_hotkey_scheduler;
   NetPlayDialog* m_netplay_dialog;
