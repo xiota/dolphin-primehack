@@ -12,7 +12,7 @@ namespace {
 void hudmemo_overlay_adjust_mp1(PowerPC::PowerPCState& ppc_state, PowerPC::MMU& mmu, u32 job) {
   if (job == 0) {  // Fix time
     const u32 time_addr = ppc_state.gpr[28] + 0x30;
-    mmu.Write_F32(std::max(mmu.Read_F32(time_addr), 3.f), time_addr);
+    mmu.Write<float>(std::max(mmu.Read<float>(time_addr), 3.f), time_addr);
 
     // Original instruction: li r4, 0
     ppc_state.gpr[4] = 0;
@@ -29,7 +29,7 @@ void hudmemo_overlay_adjust_mp1(PowerPC::PowerPCState& ppc_state, PowerPC::MMU& 
 void hudmemo_overlay_adjust_mp1_gc(PowerPC::PowerPCState& ppc_state, PowerPC::MMU& mmu, u32 job) {
   if (job == 0) {  // Fix time
     const u32 time_addr = ppc_state.gpr[28] + 0x34;
-    mmu.Write_F32(std::max(mmu.Read_F32(time_addr), 3.f), time_addr);
+    mmu.Write<float>(std::max(mmu.Read<float>(time_addr), 3.f), time_addr);
 
     // Original instruction: li r4, 0
     ppc_state.gpr[4] = 0;
