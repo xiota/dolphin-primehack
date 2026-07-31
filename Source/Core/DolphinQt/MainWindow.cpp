@@ -158,13 +158,6 @@ static void InstallSignalHandler()
 }
 #endif
 
-static QString WindowTitleStr() {
-  static QString title = QStringLiteral("%VERSION%")
-    .replace(QStringLiteral("%VERSION%"),
-      QString::fromStdString(Common::GetScmRevStr()));
-  return title;
-}
-
 static WindowSystemType GetWindowSystemType()
 {
   // Determine WSI type based on Qt platform.
@@ -224,7 +217,7 @@ MainWindow::MainWindow(Core::System& system, std::unique_ptr<BootParameters> boo
                        const std::string& movie_path)
     : QMainWindow(nullptr), m_system(system)
 {
-  setWindowTitle(WindowTitleStr());
+  setWindowTitle(QString::fromStdString(Common::GetScmRevStr()));
   setWindowIcon(Resources::GetAppIcon());
   setUnifiedTitleAndToolBarOnMac(true);
   setAcceptDrops(true);
@@ -1308,7 +1301,7 @@ void MainWindow::HideRenderWidget(bool reinit, bool is_exit)
     m_rendering_to_main = false;
     m_stack->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     disconnect(Host::GetInstance(), &Host::RequestTitle, this, &MainWindow::setWindowTitle);
-    setWindowTitle(WindowTitleStr());
+    setWindowTitle(QString::fromStdString(Common::GetScmRevStr()));
   }
 
   // The following code works around a driver bug that would lead to Dolphin crashing when changing
