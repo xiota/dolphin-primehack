@@ -27,9 +27,12 @@
 
 #include "Core/Boot/Boot.h"
 #include "Core/Config/MainSettings.h"
+#include "Core/ConfigManager.h"
 #include "Core/Core.h"
 #include "Core/DolphinAnalytics.h"
 #include "Core/System.h"
+#include "Core/PrimeHack/ElfModLoaderInterface.h"
+#include "Core/PrimeHack/HackConfig.h"
 
 #include "DolphinQt/Host.h"
 #include "DolphinQt/MainWindow.h"
@@ -231,6 +234,25 @@ int main(int argc, char* argv[])
     game_specified = true;
   }
 
+  if (options.is_set_by_user("preset"))
+  {
+    auto preset_args = options.all("preset");
+    for (auto const& preset_arg : preset_args)
+    {
+      std::istringstream buffer(preset_arg);
+      std::string mod_str, game_str, val;
+      std::getline(buffer, mod_str, '.');
+      std::getline(buffer, game_str, '=');
+      std::getline(buffer, val, '=');
+
+      if (mod_str.empty() || game_str.empty() || val.empty())
+      {
+        continue;
+      }
+      prime::AddInitialPreset(mod_str, game_str, val);
+    }
+  }
+
   int retval;
 
   if (save_state_path && !game_specified)
@@ -262,6 +284,20 @@ int main(int argc, char* argv[])
 
     MainWindow win{Core::System::GetInstance(), std::move(boot),
                    static_cast<const char*>(options.get("movie"))};
+
+    if (!Config::Get(Config::PRIMEHACK_INITIAL_RUN))
+    {
+      ModalMessageBox::primehack_initialrun(&win);
+      Config::SetBase(Config::PRIMEHACK_INITIAL_RUN, true);
+    }
+
+    std::thread([] {
+      Common::HttpRequest motd_req;
+      auto get_resp = motd_req.Get("https://gist.githubusercontent.com/shiiion/366c2421f650d456ddfb3803c06b49fd/raw/");
+      if (get_resp) {
+        prime::SetMotd(std::string(get_resp->begin(), get_resp->end()));
+      }
+    }).detach();
 
 #if defined(USE_ANALYTICS) && USE_ANALYTICS
     if (!Config::Get(Config::MAIN_ANALYTICS_PERMISSION_ASKED))

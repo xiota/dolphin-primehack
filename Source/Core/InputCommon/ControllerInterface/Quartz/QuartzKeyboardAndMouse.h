@@ -9,7 +9,16 @@
 #include "InputCommon/ControllerInterface/CoreDevice.h"
 
 #ifdef __OBJC__
-@class DolWindowPositionObserver;
+/// Helper class to get window position data from threads other than the main thread
+@interface DolWindowPositionObserver : NSObject
+
+- (instancetype)initWithView:(NSView*)view;
+- (void)addKeyWindowChangeCallback:(void(*)(void*, bool))callback ctx:(void*)ctx;
+- (void)removeKeyWindowChangeCallback:(void*)ctx;
+@property(readonly) NSRect frame;
+@property(readonly, getter=isKeyWindow) bool keyWindow;
+
+@end
 #else
 class DolWindowPositionObserver;
 #endif

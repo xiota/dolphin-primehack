@@ -314,6 +314,7 @@ extern const Info<bool> MAIN_GAMELIST_COLUMN_BLOCK_SIZE;
 extern const Info<bool> MAIN_GAMELIST_COLUMN_COMPRESSION;
 extern const Info<bool> MAIN_GAMELIST_COLUMN_TIME_PLAYED;
 extern const Info<bool> MAIN_GAMELIST_COLUMN_TAGS;
+extern const Info<bool> MAIN_GAMELIST_COLUMN_PHSUPPORT;
 
 // Main.FifoPlayer
 
@@ -404,6 +405,22 @@ static constexpr std::size_t WIIMOTE_SPEAKER_COUNT = 4;
 extern const Info<bool> MAIN_WIIMOTE_AUDIO_ROUTING_ENABLED;
 extern const std::array<Info<bool>, WIIMOTE_SPEAKER_COUNT> MAIN_WIIMOTE_AUDIO_OUTPUT_ENABLED;
 extern const std::array<Info<std::string>, WIIMOTE_SPEAKER_COUNT> MAIN_WIIMOTE_AUDIO_OUTPUT_DEVICE;
+
+// PrimeHack
+extern const Info<bool> PRIMEHACK_ENABLE;
+extern const Info<bool> PRIMEHACK_INITIAL_RUN;
+extern const Info<bool> PRIMEHACK_PROMPT_TAB;
+
+extern const Info<bool> PRIMEHACK_NOCLIP;
+extern const Info<bool> PRIMEHACK_INVULNERABILITY;
+extern const Info<bool> PRIMEHACK_SKIPMP2_PORTAL;
+extern const Info<bool> PRIMEHACK_SKIPPABLE_CUTSCENES;
+extern const Info<bool> PRIMEHACK_RESTORE_SCANDASH;
+extern const Info<bool> PRIMEHACK_FRIENDVOUCHERS;
+extern const Info<bool> PRIMEHACK_DISABLE_HUDMEMO;
+extern const Info<bool> PRIMEHACK_UNLOCK_HYPERMODE;
+extern const Info<bool> PRIMEHACK_ANYBEAM_DOOR;
+extern const Info<bool> PRIMEHACK_MODLOADER_ENABLED;
 
 // GameCube path utility functions
 

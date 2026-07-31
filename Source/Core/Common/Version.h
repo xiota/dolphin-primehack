@@ -17,4 +17,6 @@ const std::string& GetScmDistributorStr();
 const std::string& GetScmUpdateTrackStr();
 const std::string& GetNetplayDolphinVer();
 int GetScmCommitsAheadMaster();
+#define EMULATOR_NAME "PrimeHack"
+#define EMULATOR_VERSION "v1.0.9"
 }  // namespace Common

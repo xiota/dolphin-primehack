@@ -14,6 +14,8 @@
 #include "InputCommon/ControllerEmu/ControlGroup/ControlGroup.h"
 #include "InputCommon/ControllerInterface/ControllerInterface.h"
 
+#include "Core/PrimeHack/HackConfig.h"
+
 namespace ControllerEmu
 {
 // This should theoretically be per EmulatedController instance,
@@ -154,6 +156,11 @@ void EmulatedController::LoadDefaults(const ControllerInterface& ciface)
   {
     SetDefaultDevice(default_device_string);
   }
+}
+
+void EmulatedController::LoadPrimeHackDefaults(const ControllerInterface& ciface)
+{
+  LoadDefaults(ciface);
 }
 
 void ControlGroupContainer::SetInputOverrideFunction(InputOverrideFunction override_func)

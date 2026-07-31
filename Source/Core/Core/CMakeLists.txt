@@ -590,6 +590,41 @@ add_library(core
   WiiRoot.h
   WiiUtils.cpp
   WiiUtils.h
+  PrimeHack/AddressDB.cpp
+  PrimeHack/AddressDBInit.cpp
+  PrimeHack/EmuVariableManager.cpp
+  PrimeHack/ElfModLoaderInterface.cpp
+  PrimeHack/ElfModLoaderInterface.h
+  PrimeHack/GuestAllocator.cpp
+  PrimeHack/GuestAllocator.h
+  PrimeHack/HackConfig.cpp
+  PrimeHack/HackManager.cpp
+  PrimeHack/Mods/AllDoorAnyBeam.h
+  PrimeHack/Mods/AutoConvertFriendVouchers.cpp
+  PrimeHack/Mods/AutoEFB.cpp
+  PrimeHack/Mods/AutoFogToggleMP3.cpp
+  PrimeHack/Mods/AutoFogToggleMP3.h
+  PrimeHack/Mods/BloomIntensityMP3.cpp
+  PrimeHack/Mods/ContextSensitiveControls.cpp
+  PrimeHack/Mods/CutBeamFxMP1.cpp
+  PrimeHack/Mods/DisableBloom.h
+  PrimeHack/Mods/DisableHudMemoPopup.cpp
+  PrimeHack/Mods/ElfModLoader.cpp
+  PrimeHack/Mods/FpsControls.cpp
+  PrimeHack/Mods/FriendVouchers.h
+  PrimeHack/Mods/Invulnerability.h
+  PrimeHack/Mods/MapController.cpp
+  PrimeHack/Mods/Noclip.cpp
+  PrimeHack/Mods/PortalSkipMP2.cpp
+  PrimeHack/Mods/SkipCutscene.h
+  PrimeHack/Mods/SpringballButton.cpp
+  PrimeHack/Mods/STRGPatch.cpp
+  PrimeHack/Mods/ViewModifier.cpp
+  PrimeHack/PrimeMod.cpp
+  PrimeHack/PrimeUtils.cpp
+  PrimeHack/PrimeUtils.h
+  PrimeHack/Quaternion.cpp
+  PrimeHack/Transform.cpp
 )
 
 if(_M_X86_64)

@@ -22,6 +22,8 @@
 #include "Core/Config/GraphicsSettings.h"
 #include "Core/Config/MainSettings.h"
 #include "Core/Config/UISettings.h"
+#include "Core/ConfigManager.h"
+#include "Core/Config/MainSettings.h"
 #include "Core/Core.h"
 #include "Core/FreeLookManager.h"
 #include "Core/HotkeyManager.h"
@@ -624,17 +626,72 @@ void HotkeyScheduler::Run()
       Config::SetCurrent(Config::GFX_STEREO_CONVERGENCE,
                          std::min(stereo_convergence + 5, Config::GFX_STEREO_CONVERGENCE_MAXIMUM));
 
+    const bool hardcore = AchievementManager::GetInstance().IsHardcoreModeActive();
     // Free Look
     if (IsHotkey(HK_FREELOOK_TOGGLE))
     {
       const bool new_value = !Config::Get(Config::FREE_LOOK_ENABLED);
       Config::SetCurrent(Config::FREE_LOOK_ENABLED, new_value);
 
-      const bool hardcore = AchievementManager::GetInstance().IsHardcoreModeActive();
       if (hardcore)
         OSD::AddMessage("Free Look is Disabled in Hardcore Mode");
       else
         OSD::AddMessage(fmt::format("Free Look: {}", new_value ? "Enabled" : "Disabled"));
+    }
+
+    // PrimeHack
+    if (Config::Get(Config::MAIN_ENABLE_CHEATS)) {
+      if (IsHotkey(HK_NOCLIP_TOGGLE))
+      {
+        const bool new_value = !Config::Get(Config::PRIMEHACK_NOCLIP);
+        Config::SetBaseOrCurrent(Config::PRIMEHACK_NOCLIP, new_value);
+
+        if (hardcore)
+          OSD::AddMessage("Noclip is Disabled in Hardcore Mode");
+        else
+          OSD::AddMessage(StringFromFormat("Noclip: %s", new_value ? "Enabled" : "Disabled"));
+      }
+
+      if (IsHotkey(HK_INVULNERABILITY_TOGGLE))
+      {
+        const bool new_value = !Config::Get(Config::PRIMEHACK_INVULNERABILITY);
+        Config::SetBaseOrCurrent(Config::PRIMEHACK_INVULNERABILITY, new_value);
+
+        if (hardcore)
+          OSD::AddMessage("Invulnerability is Disabled in Hardcore Mode");
+        else
+          OSD::AddMessage(StringFromFormat("Invulnerability: %s", new_value ? "Enabled" : "Disabled"));
+      }
+
+      if (IsHotkey(HK_SKIP_CUTSCENE))
+      {
+        const bool new_value = !Config::Get(Config::PRIMEHACK_SKIPPABLE_CUTSCENES);
+        Config::SetBaseOrCurrent(Config::PRIMEHACK_SKIPPABLE_CUTSCENES, new_value);
+
+        if (hardcore)
+          OSD::AddMessage("Skip Cutscene is Disabled in Hardcore Mode");
+        else
+          OSD::AddMessage(StringFromFormat("Skippable Cutscenes: %s", new_value ? "Enabled" : "Disabled"));
+      }
+
+      if (IsHotkey(HK_RESTORE_DASHING))
+      {
+        const bool new_value = !Config::Get(Config::PRIMEHACK_RESTORE_SCANDASH);
+        Config::SetBaseOrCurrent(Config::PRIMEHACK_RESTORE_SCANDASH, new_value);
+
+        if (hardcore)
+          OSD::AddMessage("Restore Dashing is Disabled in Hardcore Mode");
+        else
+          OSD::AddMessage(StringFromFormat("Restore Dashing: %s", new_value ? "Enabled" : "Disabled"));
+      }
+    }
+
+    if (IsHotkey(HK_MOTION_LOCK))
+    {
+      const bool new_value = !Config::Get(Config::LOCKCAMERA_IN_PUZZLES);
+      Config::SetCurrent(Config::LOCKCAMERA_IN_PUZZLES, new_value);
+
+      OSD::AddMessage(StringFromFormat("Lock Camera in Motions: %s", new_value ? "Enabled" : "Disabled"));
     }
 
     // Savestates

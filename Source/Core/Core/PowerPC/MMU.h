@@ -233,6 +233,9 @@ public:
   template <std::unsigned_integral T>
   void Write(const Common::MakeAtLeastU32<T> var, const u32 address);
 
+  float Read_F32(u32 address);
+  void Write_F32(float var, u32 address);
+
   void Write_U16_Swap(u32 var, u32 address);
   void Write_U32_Swap(u32 var, u32 address);
   void Write_U64_Swap(u64 var, u32 address);

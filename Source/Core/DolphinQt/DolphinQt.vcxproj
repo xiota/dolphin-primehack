@@ -17,6 +17,12 @@
     <Import Project="$(VSPropsDir)QtCompile.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <TargetName>PrimeHack</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <TargetName>PrimeHack</TargetName>
+  </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalIncludeDirectories>$(ProjectDir)Config\Graphics;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -42,12 +48,16 @@
     <Manifest>
       <AdditionalManifestFiles>DolphinQt.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <Link>
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+    </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AboutDialog.cpp" />
     <ClCompile Include="CheatSearchFactoryWidget.cpp" />
     <ClCompile Include="CheatSearchWidget.cpp" />
     <ClCompile Include="CheatsManager.cpp" />
+    <ClCompile Include="ConfigureModWindow.cpp" />
     <ClCompile Include="Achievements\AchievementBox.cpp" />
     <ClCompile Include="Achievements\AchievementHeaderWidget.cpp" />
     <ClCompile Include="Achievements\AchievementLeaderboardWidget.cpp" />
@@ -91,9 +101,11 @@
     <ClCompile Include="Config\GraphicsModListWidget.cpp" />
     <ClCompile Include="Config\GraphicsModWarningWidget.cpp" />
     <ClCompile Include="Config\HardcoreWarningWidget.cpp" />
+    <ClCompile Include="Config\Graphics\PrimeWidget.cpp" />
     <ClCompile Include="Config\InfoWidget.cpp" />
     <ClCompile Include="Config\LogConfigWidget.cpp" />
     <ClCompile Include="Config\LogWidget.cpp" />
+    <ClCompile Include="Config\PrimeCheatsWidget.cpp" />
     <ClCompile Include="Config\Mapping\FreeLookGeneral.cpp" />
     <ClCompile Include="Config\Mapping\FreeLookRotation.cpp" />
     <ClCompile Include="Config\Mapping\GBAPadEmu.cpp" />
@@ -112,6 +124,7 @@
     <ClCompile Include="Config\Mapping\HotkeyTAS.cpp" />
     <ClCompile Include="Config\Mapping\HotkeyUSBEmu.cpp" />
     <ClCompile Include="Config\Mapping\HotkeyWii.cpp" />
+    <ClCompile Include="Config\Mapping\HotkeyPrimeHack.cpp" />
     <ClCompile Include="Config\Mapping\IOWindow.cpp" />
     <ClCompile Include="Config\Mapping\MappingButton.cpp" />
     <ClCompile Include="Config\Mapping\MappingCommon.cpp" />
@@ -122,7 +135,11 @@
     <ClCompile Include="Config\Mapping\WiimoteEmuExtension.cpp" />
     <ClCompile Include="Config\Mapping\WiimoteEmuExtensionMotionInput.cpp" />
     <ClCompile Include="Config\Mapping\WiimoteEmuExtensionMotionSimulation.cpp" />
-    <ClCompile Include="Config\Mapping\WiimoteEmuGeneral.cpp" />
+	<ClCompile Include="Config\Mapping\WiimoteEmuGeneral.cpp" />
+    <ClCompile Include="Config\Mapping\WiimoteEmuMetroid.cpp" />
+    <ClCompile Include="Config\Mapping\PrimeHackEmuWii.cpp" />
+	<ClCompile Include="Config\Mapping\PrimeHackEmuGC.cpp" />
+	<ClCompile Include="Config\Mapping\GCPadEmuMetroid.cpp" />
     <ClCompile Include="Config\Mapping\WiimoteEmuMotionControl.cpp" />
     <ClCompile Include="Config\Mapping\WiimoteEmuMotionControlIMU.cpp" />
     <ClCompile Include="Config\NewPatchDialog.cpp" />
@@ -139,6 +156,7 @@
     <ClCompile Include="Config\VerifyWidget.cpp" />
     <ClCompile Include="Config\WiimoteControllersWidget.cpp" />
     <ClCompile Include="ConvertDialog.cpp" />
+    <ClCompile Include="CVarDataModel.cpp" />
     <ClCompile Include="Debugger\AssembleInstructionDialog.cpp" />
     <ClCompile Include="Debugger\AssemblerWidget.cpp" />
     <ClCompile Include="Debugger\AssemblyEditor.cpp" />
@@ -328,9 +346,11 @@
     <QtMoc Include="Config\GraphicsModListWidget.h" />
     <QtMoc Include="Config\GraphicsModWarningWidget.h" />
     <QtMoc Include="Config\HardcoreWarningWidget.h" />
+    <QtMoc Include="Config\Graphics\PrimeWidget.h" />
     <QtMoc Include="Config\InfoWidget.h" />
     <QtMoc Include="Config\LogConfigWidget.h" />
     <QtMoc Include="Config\LogWidget.h" />
+    <QtMoc Include="Config\PrimeCheatsWidget.h" />
     <QtMoc Include="Config\Mapping\FreeLookGeneral.h" />
     <QtMoc Include="Config\Mapping\FreeLookRotation.h" />
     <QtMoc Include="Config\Mapping\GBAPadEmu.h" />
@@ -357,6 +377,9 @@
     <QtMoc Include="Config\Mapping\WiimoteEmuExtensionMotionInput.h" />
     <QtMoc Include="Config\Mapping\WiimoteEmuExtensionMotionSimulation.h" />
     <QtMoc Include="Config\Mapping\WiimoteEmuGeneral.h" />
+    <QtMoc Include="Config\Mapping\WiimoteEmuMetroid.h" />
+    <QtMoc Include="Config\Mapping\PrimeHackEmuWii.h" />
+	<QtMoc Include="Config\Mapping\PrimeHackEmuGC.h" />
     <QtMoc Include="Config\Mapping\WiimoteEmuMotionControl.h" />
     <QtMoc Include="Config\Mapping\WiimoteEmuMotionControlIMU.h" />
     <QtMoc Include="Config\PropertiesDialog.h" />
@@ -460,6 +483,8 @@
     <QtMoc Include="TAS\WiiTASInputWindow.h" />
     <QtMoc Include="ToolBar.h" />
     <QtMoc Include="Updater.h" />
+    <QtMoc Include="ConfigureModWindow.h" />
+    <QtMoc Include="CVarDataModel.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />

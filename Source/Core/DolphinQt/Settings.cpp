@@ -29,12 +29,17 @@
 #include "Core/AchievementManager.h"
 #include "Core/Config/GraphicsSettings.h"
 #include "Core/Config/MainSettings.h"
+#include "Core/Config/WiimoteSettings.h"
 #include "Core/ConfigManager.h"
 #include "Core/Core.h"
+#include "Core/HW/SI/SI_Device.h"
+#include "Core/HW/Wiimote.h"
 #include "Core/IOS/IOS.h"
 #include "Core/NetPlayClient.h"
 #include "Core/NetPlayServer.h"
 #include "Core/System.h"
+#include "Core/PrimeHack/HackConfig.h"
+#include "Core/PrimeHack/HackManager.h"
 
 #include "DolphinQt/QtUtils/QueueOnObject.h"
 
@@ -89,6 +94,10 @@ Settings::Settings()
 
       QueueOnObject(this, [this] { emit DevicesChanged(); });
     }
+  });
+
+  prime::AddOnGameChangeCallback([this](prime::Game game, prime::Region region) {
+    QueueOnObject(this, [this, game, region] { emit PrimeGameChange(game, region); });
   });
 }
 
@@ -585,12 +594,20 @@ void Settings::SetStateSlot(int slot)
 
 Config::ShowCursor Settings::GetCursorVisibility() const
 {
+  if (!prime::ControllerMode()) {
+    return Config::ShowCursor::Never;
+  }
+
   return Config::Get(Config::MAIN_SHOW_CURSOR);
 }
 
 bool Settings::GetLockCursor() const
 {
-  return Config::Get(Config::MAIN_LOCK_CURSOR);
+  if (prime::ControllerMode()) {
+    return Config::Get(Config::MAIN_LOCK_CURSOR);
+  }
+
+  return true;
 }
 
 void Settings::SetKeepWindowOnTop(bool top)
@@ -697,6 +714,28 @@ void Settings::ResetNetPlayServer(NetPlay::NetPlayServer* server)
 bool Settings::GetCheatsEnabled() const
 {
   return Config::Get(Config::MAIN_ENABLE_CHEATS);
+}
+
+bool Settings::GetPrimeEnabled() const
+{
+  return Config::Get(Config::PRIMEHACK_ENABLE);
+}
+
+void Settings::SetPrimeEnabled(bool enabled)
+{
+  for (int i = 0; i < 4; i++) {
+    auto gc_device = Config::Get(Config::GetInfoForSIDevice(i));
+    if (gc_device == SerialInterface::SIDevices::SIDEVICE_GC_METROID) {
+      Config::SetBaseOrCurrent(Config::GetInfoForSIDevice(i),
+       SerialInterface::SIDevices::SIDEVICE_GC_CONTROLLER);
+    }
+    auto wm_device = Config::Get(Config::GetInfoForWiimoteSource(i));
+    if (wm_device == WiimoteSource::Metroid) {
+      Config::SetBaseOrCurrent(Config::GetInfoForWiimoteSource(i),
+       WiimoteSource::Emulated);
+    }
+  }
+  emit EnablePrimeChanged(enabled);
 }
 
 void Settings::SetDebugModeEnabled(bool enabled)

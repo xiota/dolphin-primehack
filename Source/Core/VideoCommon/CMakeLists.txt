@@ -234,6 +234,7 @@ add_library(videocommon
   XFStateManager.h
   XFStructs.cpp
   XFStructs.h
+	PrimePixelErrorTextures.h
 )
 
 target_link_libraries(videocommon

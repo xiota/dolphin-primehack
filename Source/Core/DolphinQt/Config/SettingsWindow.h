@@ -30,6 +30,8 @@ protected:
 
   void changeEvent(QEvent* event) override;
 
+  QWidget* GetActivePane();
+
 private:
   void UpdateNavigationListStyle();
 

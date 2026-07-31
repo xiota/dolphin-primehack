@@ -4,12 +4,19 @@
 #include "InputCommon/ControllerEmu/ControlGroup/ControlGroup.h"
 
 #include "Common/IniFile.h"
+#include "Common/FileSearch.h"
+#include "Common/FileUtil.h"
+#include "Common/IOFile.h"
+
+#include "Core/HW/Wiimote.h"
 
 #include "InputCommon/ControlReference/ControlReference.h"
 #include "InputCommon/ControllerEmu/Control/Input.h"
 #include "InputCommon/ControllerEmu/Control/Output.h"
 #include "InputCommon/ControllerEmu/ControllerEmu.h"
 #include "InputCommon/ControllerEmu/Setting/NumericSetting.h"
+#include "InputCommon/ControllerEmu/ControlGroup/PrimeHackModes.h"
+#include "InputCommon/ControllerEmu/ControlGroup/PrimeHackAltProfile.h"
 
 namespace ControllerEmu
 {
@@ -79,6 +86,36 @@ void ControlGroup::LoadConfig(Common::IniFile::Section* sec, const std::string& 
     sec->Get(group + c->name + "/Range", &c->control_ref->range, 100.0);
     c->control_ref->range /= 100;
   }
+
+  if (type == GroupType::Buttons) {
+    // Load D-Pad Down into Missiles control
+    if (use_metroid_ui) {
+      if (controls.size() == 7) { // Hacky way to tell if Wii or GCN
+        std::string expression;
+        sec->Get("D-Pad/Down", &expression, "");
+        controls[6]->control_ref->SetExpression(std::move(expression));
+      }
+    }
+  }
+
+  // extensions
+  if (type == GroupType::PrimeHackMode)
+  {
+    auto* const ext = static_cast<PrimeHackModes*>(this);
+
+    std::string i;
+    sec->Get(base + name + "/Mode", &i, "0");
+    ext->SetSelectedDevice(stoi(i));
+  }
+
+  if (type == GroupType::PrimeHackAltProfile)
+  {
+    auto* const ext = static_cast<PrimeHackAltProfile*>(this);
+
+    std::string prof;
+    sec->Get(base + name + "/AltProfile", &prof);
+    ext->SetAltProfileName(prof);
+  }
 }
 
 void ControlGroup::SaveConfig(Common::IniFile::Section* sec, const std::string& base)
@@ -102,6 +139,42 @@ void ControlGroup::SaveConfig(Common::IniFile::Section* sec, const std::string& 
 
     // range
     sec->Set(group + c->name + "/Range", c->control_ref->range * 100.0, 100.0);
+  }
+
+  if (type == GroupType::Buttons) {
+    // Load D-Pad Down into Missiles control
+    if (use_metroid_ui) {
+      if (controls.size() == 7) { // Hacky way to tell if Wii or GCN
+        sec->Set("D-Pad/Down", controls[6]->control_ref->GetExpression(), "");
+      }
+    }
+  }
+
+  if (type == GroupType::PrimeHackMode)
+  {
+    auto* const ext = static_cast<PrimeHackModes*>(this);
+
+    sec->Set(base + name + "/Mode", std::to_string(ext->GetSelectedDevice()), "0");
+  }
+
+  if (type == GroupType::PrimeHackAltProfile)
+  {
+    auto* const ext = static_cast<PrimeHackAltProfile*>(this);
+
+    std::string morph_prof = ext->GetAltProfileName();
+    if (morph_prof.empty())
+      morph_prof = "Disabled";
+    sec->Set(base + name + "/AltProfile", morph_prof);
+
+
+    // Go ahead and save out the backup of this profile for when in-game.
+    const std::string og_wiimote_new = WIIMOTE_INI_NAME;
+    const std::string backup_wiimote_new = std::string(WIIMOTE_INI_NAME) + "_Backup.ini";
+
+    const std::string default_path = File::GetUserPath(D_CONFIG_IDX) + og_wiimote_new + ".ini";
+    std::string file_text;
+    if (File::ReadFileToString(default_path, file_text))
+      File::WriteStringToFile(File::GetUserPath(D_CONFIG_IDX) + backup_wiimote_new, file_text);
   }
 }
 

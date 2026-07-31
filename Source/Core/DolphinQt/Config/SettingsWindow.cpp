@@ -186,6 +186,11 @@ void StackedSettingsWindow::ActivatePane(int index)
   m_navigation_list->setCurrentRow(index);
 }
 
+QWidget* StackedSettingsWindow::GetActivePane()
+{
+  return m_stacked_panes->currentWidget();
+}
+
 SettingsWindow::SettingsWindow(MainWindow* parent) : StackedSettingsWindow{parent}
 {
   setWindowTitle(tr("Settings"));

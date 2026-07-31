@@ -137,6 +137,9 @@ signals:
 
   void ConfigureOSD();
 
+  // PrimeHack
+  void ModLoaderToggled(bool on);
+
 private:
   void OnEmulationStateChanged(Core::State state);
   void OnConfigChanged();
@@ -155,11 +158,14 @@ private:
   void AddShowRegionsMenu(QMenu* view_menu);
 
   void AddOptionsMenu();
+  void AddPrimeHackMenu();
   void AddToolsMenu();
   void AddHelpMenu();
   void AddMovieMenu();
   void AddJITMenu();
   void AddSymbolsMenu();
+
+  void RebuildPrimeModMenus();
 
   void UpdateStateSlotMenu();
 
@@ -311,7 +317,14 @@ private:
   QAction* m_jit_branch_off;
   QAction* m_jit_register_cache_off;
 
+  // ModLoader
+  QAction* m_modloader_enabled;
+  QAction* m_import_mod;
+  QMenu* m_enabled_mods;
+  QMenu* m_mod_settings;
+
   bool m_game_selected = false;
+  bool m_emulation_active = false;
 
 #ifdef RC_CLIENT_SUPPORTS_RAINTEGRATION
   Common::EventHook m_raintegration_event_hook;

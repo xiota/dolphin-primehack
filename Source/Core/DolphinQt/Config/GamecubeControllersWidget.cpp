@@ -8,20 +8,24 @@
 #include <QGroupBox>
 #include <QLabel>
 #include <QPushButton>
+#include <QStandardItemModel>
 #include <QVBoxLayout>
 
 #include <optional>
 #include <utility>
 
+#include "Common/Config/Config.h"
 #include "Core/ConfigManager.h"
 #include "Core/Core.h"
 #include "Core/HW/SI/SI.h"
 #include "Core/HW/SI/SI_Device.h"
+#include "Core/HW/GCPad.h"
 #include "Core/NetPlayProto.h"
 #include "Core/System.h"
 
 #include "DolphinQt/Config/Mapping/GCPadWiiUConfigDialog.h"
 #include "DolphinQt/Config/Mapping/MappingWindow.h"
+#include "DolphinQt/QtUtils/ModalMessageBox.h"
 #include "DolphinQt/QtUtils/NonDefaultQPushButton.h"
 #include "DolphinQt/QtUtils/SignalBlocking.h"
 #include "DolphinQt/Settings.h"
@@ -32,6 +36,7 @@ static constexpr std::array s_gc_types = {
     SIDeviceName{SerialInterface::SIDEVICE_GC_CONTROLLER, _trans("Standard Controller")},
     SIDeviceName{SerialInterface::SIDEVICE_WIIU_ADAPTER,
                  _trans("GameCube Controller Adapter (USB)")},
+    SIDeviceName{SerialInterface::SIDEVICE_GC_METROID, _trans("PrimeHack")},
     SIDeviceName{SerialInterface::SIDEVICE_GC_STEERING, _trans("Steering Wheel")},
     SIDeviceName{SerialInterface::SIDEVICE_DANCEMAT, _trans("Dance Mat")},
     SIDeviceName{SerialInterface::SIDEVICE_GC_TARUKONGA, _trans("DK Bongos")},
@@ -87,6 +92,7 @@ void GamecubeControllersWidget::CreateLayout()
     {
       gc_box->addItem(tr(item.second));
     }
+    static_cast<QStandardItemModel*>(gc_box->model())->item(*ToGCMenuIndex(SerialInterface::SIDevices::SIDEVICE_GC_METROID))->setEnabled(Settings::Instance().GetPrimeEnabled());
 
     int controller_row = m_gc_layout->rowCount();
     m_gc_layout->addWidget(gc_label, controller_row, 0);
@@ -112,6 +118,14 @@ void GamecubeControllersWidget::ConnectWidgets()
     });
     connect(m_gc_buttons[i], &QPushButton::clicked, this, [this, i] { OnGCPadConfigure(i); });
   }
+
+  connect(&Settings::Instance(), &Settings::EnablePrimeChanged, this,
+          [this](bool en) {
+            for (size_t i = 0; i < m_gc_controller_boxes.size(); i++)
+            {
+              static_cast<QStandardItemModel*>(m_gc_controller_boxes[i]->model())->item(*ToGCMenuIndex(SerialInterface::SIDevices::SIDEVICE_GC_METROID))->setEnabled(en);
+            }
+          });
 }
 
 void GamecubeControllersWidget::OnGCTypeChanged(size_t index)
@@ -133,6 +147,11 @@ void GamecubeControllersWidget::OnGCPadConfigure(size_t index)
     return;
   case SerialInterface::SIDEVICE_GC_CONTROLLER:
     type = MappingWindow::Type::MAPPING_GCPAD;
+    Pad::ChangeUIPrimeHack(static_cast<int>(index), false);
+    break;
+  case SerialInterface::SIDEVICE_GC_METROID:
+    type = MappingWindow::Type::MAPPING_GCPAD_METROID;
+    Pad::ChangeUIPrimeHack(static_cast<int>(index), true);
     break;
   case SerialInterface::SIDEVICE_WIIU_ADAPTER:
   {
@@ -160,6 +179,19 @@ void GamecubeControllersWidget::OnGCPadConfigure(size_t index)
     break;
   default:
     return;
+  }
+
+  if (type == MappingWindow::Type::MAPPING_GCPAD) {
+    if (!Config::Get(Config::PRIMEHACK_PROMPT_TAB))
+    {
+      if (ModalMessageBox::primehack_gctab(this)) {
+        type = MappingWindow::Type::MAPPING_GCPAD_METROID;
+        Pad::ChangeUIPrimeHack(static_cast<int>(index), true);
+        m_gc_controller_boxes[index]->setCurrentIndex(3);
+      }
+
+      Config::SetBase(Config::PRIMEHACK_PROMPT_TAB, true);
+    }
   }
 
   MappingWindow* window = new MappingWindow(this, type, static_cast<int>(index));

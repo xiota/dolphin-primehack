@@ -119,7 +119,7 @@ static void InitCustomPaths()
 
 static void RefreshConfig()
 {
-  Common::SetEnableAlert(Config::Get(Config::MAIN_USE_PANIC_HANDLERS));
+  Common::SetEnableAlert(false); // Panic Handlers forced off
   Common::SetAbortOnPanicAlert(Config::Get(Config::MAIN_ABORT_ON_PANIC_ALERT));
 }
 
@@ -292,6 +292,7 @@ void CreateDirectories()
   File::CreateFullPath(File::GetUserPath(D_STATESAVES_IDX));
   File::CreateFullPath(File::GetUserPath(D_ASM_ROOT_IDX));
   File::CreateFullPath(File::GetUserPath(D_WFSROOT_IDX));
+  File::CreateFullPath(File::GetUserPath(D_PRIMEHACK_MODLOADER_IDX));
 #ifndef ANDROID
   File::CreateFullPath(File::GetUserPath(D_THEMES_IDX));
   File::CreateFullPath(File::GetUserPath(D_STYLES_IDX));

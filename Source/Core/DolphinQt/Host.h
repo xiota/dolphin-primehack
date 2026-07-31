@@ -44,6 +44,7 @@ signals:
   void JitProfileDataWiped();
   void PPCSymbolsChanged();
   void PPCBreakpointsChanged();
+  void UpdateAndRecenterCursor(bool locked);
 
 private:
   Host();

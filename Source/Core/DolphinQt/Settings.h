@@ -13,6 +13,7 @@
 #include "Common/Config/Config.h"
 #include "Common/HookableEvent.h"
 #include "Core/Config/MainSettings.h"
+#include "Core/PrimeHack/PrimeMod.h"
 #include "DiscIO/Enums.h"
 
 namespace Core
@@ -153,6 +154,9 @@ public:
   // Cheats
   bool GetCheatsEnabled() const;
 
+  bool GetPrimeEnabled() const;
+  void SetPrimeEnabled(bool enabled);
+
   // Debug
   void SetDebugModeEnabled(bool enabled);
   bool IsDebugModeEnabled() const;
@@ -214,6 +218,7 @@ signals:
   void ToolBarVisibilityChanged(bool visible);
   void WidgetLockChanged(bool locked);
   void EnableCheatsChanged(bool enabled);
+  void EnablePrimeChanged(bool _t1);
   void WatchVisibilityChanged(bool visible);
   void BreakpointsVisibilityChanged(bool visible);
   void CodeVisibilityChanged(bool visible);
@@ -231,6 +236,7 @@ signals:
   void WiiSpeakMuteChanged(bool muted);
   void EnableGfxModsChanged(bool enabled);
   void GameCountVisibilityChanged(bool visible);
+  void PrimeGameChange(prime::Game, prime::Region);
 
 private:
   Settings();

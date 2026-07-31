@@ -281,6 +281,10 @@ void PowerPCManager::Init(CPUCore cpu_core)
   m_ppc_state.dCache.Init(memory);
 }
 
+static void vmcall_noop(PowerPCState& ppc_state, MMU&, u32 param) {
+  WARN_LOG_FMT(POWERPC, "Executed unhandled vmcall, PC={:#x} VMFP={}", ppc_state.pc, param);
+}
+
 void PowerPCManager::Reset()
 {
   m_ppc_state.pagetable_base = 0;
@@ -292,6 +296,10 @@ void PowerPCManager::Reset()
   m_ppc_state.iCache.Reset(m_system.GetJitInterface());
   m_ppc_state.dCache.Reset();
   m_system.GetMMU().Reset();
+
+  for (vm_call& fn : m_ppc_state.vmcall_table) {
+    fn = vmcall_noop;
+  }
 }
 
 void PowerPCManager::ScheduleInvalidateCacheThreadSafe(u32 address)
@@ -318,6 +326,31 @@ void PowerPCManager::Shutdown()
   m_system.GetJitInterface().Shutdown();
   m_system.GetInterpreter().Shutdown();
   m_cpu_core_base = nullptr;
+}
+
+void PowerPCManager::RegisterVmcallWithIndex(int index, vm_call pfn) {
+  m_ppc_state.vmcall_table[index] = pfn;
+}
+
+int PowerPCManager::RegisterVmcall(vm_call pfn) {
+  // Check if already registered
+  for (size_t i = 0; i < m_ppc_state.vmcall_table.size(); i++) {
+    if (m_ppc_state.vmcall_table[i] == pfn) {
+      return static_cast<int>(i);
+    }
+  }
+
+  for (size_t i = 0; i < m_ppc_state.vmcall_table.size(); i++) {
+    if (m_ppc_state.vmcall_table[i] == vmcall_noop) {
+      m_ppc_state.vmcall_table[i] = pfn;
+      return static_cast<int>(i);
+    }
+  }
+  return -1;
+}
+
+void PowerPCManager::VmcallDefaultFn(u32 param) {
+  vmcall_noop(m_ppc_state, m_system.GetMMU(), param);
 }
 
 CoreMode PowerPCManager::GetMode() const

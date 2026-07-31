@@ -35,8 +35,10 @@
 #include <QListView>
 #include <QMap>
 #include <QMenu>
+#include <QPainter>
 #include <QShortcut>
 #include <QSortFilterProxyModel>
+#include <QStyledItemDelegate>
 #include <QTableView>
 #include <QUrl>
 
@@ -72,8 +74,22 @@
 
 #include "UICommon/GameFile.h"
 
+#include "Common/Logging/Log.h"
+
 namespace
 {
+class CenterStyle : public QStyledItemDelegate {
+public:
+  CenterStyle(QWidget* parent) : QStyledItemDelegate(parent) {}
+  void paint(QPainter* painter, QStyleOptionViewItem const& option, QModelIndex const& index) const {
+    QRect rect = option.rect;
+    QIcon icon = qvariant_cast<QIcon>(index.data(Qt::DecorationRole));
+    QPixmap pix = icon.pixmap(QSize(25, 25), 1);
+    QPoint p = QPoint((rect.width() - pix.width()) / 2, (rect.height() - pix.height()) / 2);
+    painter->drawPixmap(rect.topLeft() + p, pix);
+  }
+};
+
 class GameListTableView : public QTableView
 {
 public:
@@ -235,6 +251,7 @@ void GameList::MakeListView()
     SetResizeMode(Column::Compression, Mode::Fixed);
     SetResizeMode(Column::TimePlayed, Mode::Interactive);
     SetResizeMode(Column::Tags, Mode::Interactive);
+    SetResizeMode(Column::PrimeHackSupport, Mode::Interactive);
 
     // Cells have 3 pixels of padding, so the width of these needs to be image width + 6. Banners
     // are 96 pixels wide, platform and country icons are 32 pixels wide.
@@ -245,6 +262,8 @@ void GameList::MakeListView()
     m_list->setColumnWidth(static_cast<int>(Column::ID), 70);
   }
 
+  m_list->setItemDelegateForColumn(static_cast<int>(GameListModel::Column::PrimeHackSupport),
+                                   new CenterStyle(this));
   // There's some odd platform-specific behavior with default minimum section size
   hor_header->setMinimumSectionSize(38);
 
@@ -301,6 +320,7 @@ void GameList::UpdateColumnVisibility()
   SetVisiblity(Column::Compression, Config::Get(Config::MAIN_GAMELIST_COLUMN_COMPRESSION));
   SetVisiblity(Column::TimePlayed, Config::Get(Config::MAIN_GAMELIST_COLUMN_TIME_PLAYED));
   SetVisiblity(Column::Tags, Config::Get(Config::MAIN_GAMELIST_COLUMN_TAGS));
+  SetVisiblity(Column::PrimeHackSupport, Config::Get(Config::MAIN_GAMELIST_COLUMN_PHSUPPORT));
 }
 
 void GameList::MakeEmptyView()
@@ -1024,6 +1044,7 @@ void GameList::OnColumnVisibilityToggled(const QString& row, bool visible)
       {tr("Compression"), Column::Compression},
       {tr("Time Played"), Column::TimePlayed},
       {tr("Tags"), Column::Tags},
+      {tr("PrimeHack Support"), Column::PrimeHackSupport},
   };
 
   m_list->setColumnHidden(static_cast<int>(rowname_to_column[row]), !visible);

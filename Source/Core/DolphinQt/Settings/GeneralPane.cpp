@@ -201,6 +201,8 @@ void GeneralPane::CreateAutoUpdate()
   auto_update_group_layout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
 
   m_combobox_update_track = new ToolTipComboBox();
+  m_combobox_update_track->setEnabled(false);
+  m_combobox_update_track->setToolTip(QString::fromStdString("Disabled by PrimeHack"));
 
   auto_update_group_layout->addRow(tr("&Auto Update:"), m_combobox_update_track);
 
@@ -291,9 +293,9 @@ void GeneralPane::LoadConfig()
     SignalBlocking(m_combobox_fallback_region)->setCurrentIndex(FALLBACK_REGION_NTSCJ_INDEX);
 }
 
-static QString UpdateTrackFromIndex(int index)
-{
-  QString value;
+  static QString UpdateTrackFromIndex(int index)
+  {
+    QString value;
 
   switch (index)
   {

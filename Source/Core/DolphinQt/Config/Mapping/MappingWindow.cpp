@@ -19,6 +19,8 @@
 #include <QVBoxLayout>
 
 #include "Core/HotkeyManager.h"
+#include "Core/HW/Wiimote.h"
+#include "Core/HW/WiimoteEmu/WiimoteEmu.h"
 
 #include "Common/CommonPaths.h"
 #include "Common/FileSearch.h"
@@ -35,6 +37,7 @@
 #include "DolphinQt/Config/Mapping/GCKeyboardEmu.h"
 #include "DolphinQt/Config/Mapping/GCMicrophone.h"
 #include "DolphinQt/Config/Mapping/GCPadEmu.h"
+#include "DolphinQt/Config/Mapping/GCPadEmuMetroid.h"
 #include "DolphinQt/Config/Mapping/Hotkey3D.h"
 #include "DolphinQt/Config/Mapping/HotkeyControllerProfile.h"
 #include "DolphinQt/Config/Mapping/HotkeyDebugging.h"
@@ -47,10 +50,14 @@
 #include "DolphinQt/Config/Mapping/HotkeyUSBEmu.h"
 #include "DolphinQt/Config/Mapping/HotkeyWii.h"
 #include "DolphinQt/Config/Mapping/MappingCommon.h"
+#include "DolphinQt/Config/Mapping/HotkeyPrimeHack.h"
 #include "DolphinQt/Config/Mapping/WiimoteEmuExtension.h"
 #include "DolphinQt/Config/Mapping/WiimoteEmuExtensionMotionInput.h"
 #include "DolphinQt/Config/Mapping/WiimoteEmuExtensionMotionSimulation.h"
 #include "DolphinQt/Config/Mapping/WiimoteEmuGeneral.h"
+#include "DolphinQt/Config/Mapping/WiimoteEmuMetroid.h"
+#include "DolphinQt/Config/Mapping/PrimeHackEmuWii.h"
+#include "DolphinQt/Config/Mapping/PrimeHackEmuGC.h"
 #include "DolphinQt/Config/Mapping/WiimoteEmuMotionControl.h"
 #include "DolphinQt/Config/Mapping/WiimoteEmuMotionControlIMU.h"
 #include "DolphinQt/QtUtils/ModalMessageBox.h"
@@ -61,12 +68,13 @@
 #include "DolphinQt/Settings.h"
 
 #include "InputCommon/ControllerEmu/ControllerEmu.h"
+#include "InputCommon/ControllerEmu/ControlGroup/PrimeHackAltProfile.h"
 #include "InputCommon/ControllerInterface/ControllerInterface.h"
 #include "InputCommon/ControllerInterface/CoreDevice.h"
 #include "InputCommon/InputConfig.h"
 
 MappingWindow::MappingWindow(QWidget* parent, Type type, int port_num)
-    : QDialog(parent), m_port(port_num)
+    : QDialog(parent), m_mapping_type(type), m_port(port_num)
 {
   setWindowTitle(tr("Port %1").arg(port_num + 1));
 
@@ -163,7 +171,7 @@ void MappingWindow::CreateProfilesLayout()
   auto* button_layout = new QHBoxLayout();
 
   m_profiles_combo->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
-  m_profiles_combo->setMinimumWidth(100);
+  m_profiles_combo->setMinimumWidth(200);
   m_profiles_combo->setEditable(true);
 
   m_profiles_layout->addWidget(m_profiles_combo);
@@ -217,7 +225,11 @@ void MappingWindow::ConnectWidgets()
   connect(m_devices_combo, &QComboBox::currentIndexChanged, this, &MappingWindow::OnSelectDevice);
 
   connect(m_reset_clear, &QPushButton::clicked, this, &MappingWindow::OnClearFieldsPressed);
-  connect(m_reset_default, &QPushButton::clicked, this, &MappingWindow::OnDefaultFieldsPressed);
+  if (m_mapping_type == Type::MAPPING_GCPAD_METROID || m_mapping_type == Type::MAPPING_WIIMOTE_METROID) {
+    connect(m_reset_default, &QPushButton::clicked, this, &MappingWindow::OnDefaultFieldsPrimeHackPressed);
+  } else {
+    connect(m_reset_default, &QPushButton::clicked, this, &MappingWindow::OnDefaultFieldsPressed);
+  }
   connect(m_profiles_save, &QPushButton::clicked, this, &MappingWindow::OnSaveProfilePressed);
   connect(m_profiles_load, &QPushButton::clicked, this, &MappingWindow::OnLoadProfilePressed);
   connect(m_profiles_delete, &QAction::triggered, this, &MappingWindow::OnDeleteProfilePressed);
@@ -340,6 +352,7 @@ void MappingWindow::OnLoadProfilePressed()
 
   const auto lock = GetController()->GetStateLock();
   emit ConfigChanged();
+  emit ProfileLoaded();
 }
 
 void MappingWindow::OnSaveProfilePressed()
@@ -364,6 +377,8 @@ void MappingWindow::OnSaveProfilePressed()
     PopulateProfileSelection();
     m_profiles_combo->setCurrentIndex(m_profiles_combo->findText(profile_name));
   }
+  emit ConfigChanged();
+  emit ProfileSaved();
 }
 
 void MappingWindow::OnOpenProfileFolder()
@@ -463,6 +478,16 @@ void MappingWindow::SetMappingType(MappingWindow::Type type)
     widget = CreateStandardControllerMappingWidget(this);
     setWindowTitle(tr("GameCube Controller at Port %1").arg(GetPort() + 1));
     AddWidget(tr("GameCube Controller"), widget);
+    m_primehack_tab =
+      AddWidget(PRIMEHACK_TAB_NAME, new PrimeHackEmuGC(this));
+    m_tab_widget->setTabEnabled(m_tab_widget->indexOf(m_primehack_tab), Config::Get(Config::PRIMEHACK_ENABLE));
+
+    break;
+  case Type::MAPPING_GCPAD_METROID:
+    widget = new GCPadEmuMetroid(this);
+    setWindowTitle(tr("PrimeHack [GameCube] (Port %1)").arg(GetPort() + 1));
+    AddWidget(tr("General"), widget);
+
     break;
   case Type::MAPPING_GC_MICROPHONE:
     widget = new GCMicrophone(this);
@@ -475,9 +500,12 @@ void MappingWindow::SetMappingType(MappingWindow::Type type)
     auto* extension = new WiimoteEmuExtension(this);
     auto* extension_motion_input = new WiimoteEmuExtensionMotionInput(this);
     auto* extension_motion_simulation = new WiimoteEmuExtensionMotionSimulation(this);
+
     widget = new WiimoteEmuGeneral(this, extension);
+
     setWindowTitle(tr("Wii Remote %1").arg(GetPort() + 1));
     AddWidget(tr("General and Options"), widget);
+
     AddWidget(tr("Motion Simulation"), new WiimoteEmuMotionControl(this));
     AddWidget(tr("Motion Input"), new WiimoteEmuMotionControlIMU(this));
     AddWidget(tr("Extension"), extension);
@@ -485,14 +513,33 @@ void MappingWindow::SetMappingType(MappingWindow::Type type)
         AddWidget(EXTENSION_MOTION_SIMULATION_TAB_NAME, extension_motion_simulation);
     m_extension_motion_input_tab =
         AddWidget(EXTENSION_MOTION_INPUT_TAB_NAME, extension_motion_input);
+    m_primehack_tab =
+      AddWidget(PRIMEHACK_TAB_NAME, new PrimeHackEmuWii(this));
+
     // Hide tabs by default. "Nunchuk" selection triggers an event to show them.
     ShowExtensionMotionTabs(false);
+
+    break;
+  }
+  case Type::MAPPING_WIIMOTE_METROID:
+  {
+    setWindowTitle(tr("PrimeHack [Wii] (Port %1)").arg(GetPort() + 1));
+
+    auto* extension = new WiimoteEmuExtension(this);
+
+    // 1 for Nunchuk
+    extension->ChangeExtensionType(1);
+    widget = new WiimoteEmuMetroid(this, extension);
+
+    AddWidget(tr("General"), widget);
+
     break;
   }
   case Type::MAPPING_HOTKEYS:
   {
     widget = new HotkeyGeneral(this);
     AddWidget(tr("General"), widget);
+    AddWidget(tr("PrimeHack"), new HotkeyPrimeHack(this));
     // i18n: TAS is short for tool-assisted speedrun. Read http://tasvideos.org/ for details.
     // Frame advance is an example of a typical TAS tool.
     AddWidget(tr("TAS Tools"), new HotkeyTAS(this));
@@ -595,6 +642,17 @@ void MappingWindow::OnDefaultFieldsPressed()
   emit Save();
 }
 
+void MappingWindow::OnDefaultFieldsPrimeHackPressed()
+{
+  m_controller->LoadPrimeHackDefaults(g_controller_interface);
+  m_controller->UpdateReferences(g_controller_interface);
+  m_controller->GetConfig()->GenerateControllerTextures();
+
+  const auto lock = GetController()->GetStateLock();
+  emit ConfigChanged();
+  emit Save();
+}
+
 void MappingWindow::OnClearFieldsPressed()
 {
   // Loading an empty inifile section clears everything.
@@ -619,12 +677,19 @@ void MappingWindow::ShowExtensionMotionTabs(bool show)
   {
     m_tab_widget->addTab(m_extension_motion_simulation_tab, EXTENSION_MOTION_SIMULATION_TAB_NAME);
     m_tab_widget->addTab(m_extension_motion_input_tab, EXTENSION_MOTION_INPUT_TAB_NAME);
+
+    m_tab_widget->removeTab(4);
+    m_tab_widget->addTab(m_primehack_tab, PRIMEHACK_TAB_NAME);
   }
   else
   {
+    m_tab_widget->removeTab(6);
     m_tab_widget->removeTab(5);
     m_tab_widget->removeTab(4);
+
+    m_tab_widget->addTab(m_primehack_tab, PRIMEHACK_TAB_NAME);
   }
+  m_tab_widget->setTabEnabled(m_tab_widget->indexOf(m_primehack_tab), Config::Get(Config::PRIMEHACK_ENABLE));
 }
 
 void MappingWindow::ActivateExtensionTab()

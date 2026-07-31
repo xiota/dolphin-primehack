@@ -12,12 +12,14 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
+#include <qstringbuilder.h>
 
 #include "DolphinQt/Config/Mapping/IOWindow.h"
 #include "DolphinQt/Config/Mapping/MappingButton.h"
 #include "DolphinQt/Config/Mapping/MappingIndicator.h"
 #include "DolphinQt/Config/Mapping/MappingNumeric.h"
 #include "DolphinQt/Config/Mapping/MappingWindow.h"
+#include "DolphinQt/QtUtils/QtUtils.h"
 
 #include "InputCommon/ControllerEmu/Control/Control.h"
 #include "InputCommon/ControllerEmu/ControlGroup/ControlGroup.h"
@@ -29,6 +31,8 @@
 
 MappingWidget::MappingWidget(MappingWindow* parent) : m_parent(parent)
 {
+  beam_change_warning = new QLabel();
+  beam_change_warning->setText(tr("Beams stack in MP3 and cannot be changed."));
   connect(parent, &MappingWindow::Update, this, &MappingWidget::Update);
   connect(parent, &MappingWindow::Save, this, &MappingWidget::SaveSettings);
   connect(parent, &MappingWindow::ConfigChanged, this, &MappingWidget::ConfigChanged);
@@ -54,9 +58,12 @@ QGroupBox* MappingWidget::CreateGroupBox(const QString& name, ControllerEmu::Con
   QGroupBox* group_box = new QGroupBox(name);
   QFormLayout* form_layout = new QFormLayout();
 
-  group_box->setLayout(form_layout);
+  QHBoxLayout* m_morph_profiles_layout = nullptr;
+  QComboBox* m_morph_profiles_combo = nullptr;
 
   MappingIndicator* indicator = nullptr;
+
+  group_box->setLayout(form_layout);
 
   switch (group->type)
   {
@@ -97,6 +104,28 @@ QGroupBox* MappingWidget::CreateGroupBox(const QString& name, ControllerEmu::Con
     indicator =
         new IRPassthroughMappingIndicator(*static_cast<ControllerEmu::IRPassthrough*>(group));
     break;
+
+  case ControllerEmu::GroupType::PrimeHackAltProfile:
+    m_morph_profiles_layout = new QHBoxLayout();
+    m_morph_profiles_combo = new QComboBox();
+    m_morph_profiles_combo->setObjectName(tr("ProfileList"));
+
+    //PrimeHack Morph Ball Controls Layout added to default group layout.
+    form_layout->addRow(m_morph_profiles_layout);
+
+    m_morph_profiles_combo->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
+    m_morph_profiles_combo->setMinimumWidth(200);
+    m_morph_profiles_combo->setEditable(true);
+
+    m_morph_profiles_layout->addWidget(m_morph_profiles_combo);
+    break;
+    
+  case ControllerEmu::GroupType::Beams: {
+    //auto* const layout = new QHBoxLayout{this};
+    form_layout->addRow(QtUtils::CreateIconWarning(this, QStyle::SP_MessageBoxWarning, beam_change_warning));
+    //form_layout->addRow(layout);
+    break;
+    }
 
   default:
     break;
@@ -160,7 +189,31 @@ QGroupBox* MappingWidget::CreateGroupBox(const QString& name, ControllerEmu::Con
   }
 
   for (auto& control : group->controls)
-    CreateControl(control.get(), form_layout, !indicator);
+  {
+    auto* button = new MappingButton(this, control->control_ref.get(), MappingButton::ControlType::NormalInput);
+
+    button->setMinimumWidth(100);
+    button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    const bool translate = control->translate == ControllerEmu::Translatability::Translate;
+    const QString translated_name =
+        translate ? tr(control->ui_name.c_str()) : QString::fromStdString(control->ui_name);
+    if (control->display_alt) {
+      QHBoxLayout* box = new QHBoxLayout;
+      box->addWidget(button);
+      box->addSpacing(2);
+
+      const QString alt_style = QString::fromUtf8("font-size: 10px; font-family: Monospace; color: DimGrey");
+      QLabel* alt_label = new QLabel;
+      alt_label->setText(QString::fromStdString("( " + control->name + " )"));
+      alt_label->setStyleSheet(alt_style);
+      box->addWidget(alt_label);
+
+      form_layout->addRow(translated_name, box);
+    }
+    else {
+      CreateControl(control.get(), form_layout, !indicator);
+    }
+  }
 
   AddSettingWidgets(form_layout, group, ControllerEmu::SettingVisibility::Normal);
 

@@ -10,6 +10,8 @@
 #include "InputCommon/ControllerEmu/ControlGroup/ControlGroup.h"
 #include "InputCommon/ControllerEmu/ControllerEmu.h"
 #include "InputCommon/ControllerEmu/Setting/NumericSetting.h"
+#include "InputCommon/ControllerEmu/ControlGroup/PrimeHackModes.h"
+#include "InputCommon/ControllerEmu/Control/Control.h"
 
 struct GCPadStatus;
 
@@ -18,6 +20,7 @@ namespace ControllerEmu
 class AnalogStick;
 class Buttons;
 class MixedTriggers;
+class PrimeHackModes;
 }  // namespace ControllerEmu
 
 enum class PadGroup
@@ -31,6 +34,13 @@ enum class PadGroup
   Mic,
   Options,
   Triforce,
+
+  Beams,
+  Visors,
+  Camera,
+  Misc,
+  ControlStick,
+  Modes
 };
 
 class GCPad : public ControllerEmu::EmulatedController
@@ -49,6 +59,19 @@ public:
   ControllerEmu::ControlGroup* GetGroup(PadGroup group);
 
   void LoadDefaults(const ControllerInterface& ciface) override;
+  void LoadPrimeHackDefaults(const ControllerInterface& ciface) override;
+
+  void ChangeUIPrimeHack(bool useMetroidUI);
+
+  bool CheckSpringBallCtrl();
+  bool PrimeControllerMode();
+
+  void SetPrimeMode(bool controller);
+
+  bool CheckPitchRecentre();
+  std::tuple<double, double> GetPrimeStickXY();
+
+  std::tuple<double, double, bool, bool, bool> GetPrimeSettings();
 
   // Values averaged from multiple genuine GameCube controllers.
   static constexpr ControlState MAIN_STICK_GATE_RADIUS = 0.7937125;
@@ -86,6 +109,9 @@ public:
   static constexpr const char* R_ANALOG = _trans("R-Analog");
 
 private:
+  bool using_metroid_ui = false;
+  std::vector<std::unique_ptr<ControllerEmu::Control>> trigger_controls_temp;
+
   ControllerEmu::Buttons* m_buttons;
   ControllerEmu::AnalogStick* m_main_stick;
   ControllerEmu::AnalogStick* m_c_stick;
@@ -97,6 +123,23 @@ private:
   ControllerEmu::Buttons* m_triforce;
 
   ControllerEmu::SettingValue<bool> m_always_connected_setting;
+
+  ControllerEmu::ControlGroup* m_primehack_camera;
+  ControllerEmu::ControlGroup* m_primehack_misc;
+  ControllerEmu::AnalogStick* m_primehack_stick;
+  ControllerEmu::PrimeHackModes* m_primehack_modes;
+
+  ControllerEmu::SettingValue<double> m_primehack_camera_sensitivity;
+  ControllerEmu::SettingValue<double> m_primehack_horizontal_sensitivity;
+  ControllerEmu::SettingValue<double> m_primehack_vertical_sensitivity;
+
+  ControllerEmu::SettingValue<bool> m_primehack_invert_y;
+  ControllerEmu::SettingValue<bool> m_primehack_invert_x;
+  ControllerEmu::SettingValue<bool> m_primehack_remap_map_controls;
+
+  static constexpr u8 STICK_GATE_RADIUS = 0x60;
+  static constexpr u8 STICK_CENTER = 0x80;
+  static constexpr u8 STICK_RADIUS = 0x7F;
 
   const unsigned int m_index;
 };

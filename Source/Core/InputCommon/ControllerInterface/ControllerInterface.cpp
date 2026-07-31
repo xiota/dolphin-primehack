@@ -8,6 +8,8 @@
 #include "Common/Assert.h"
 #include "Common/Logging/Log.h"
 #include "Core/HW/WiimoteReal/WiimoteReal.h"
+#include "Core/PrimeHack/HackConfig.h"
+#include "InputCommon/GenericMouse.h"
 
 #ifdef CIFACE_USE_WIN32
 #include "InputCommon/ControllerInterface/Win32/Win32.h"
@@ -157,8 +159,13 @@ void ControllerInterface::RefreshDevices(RefreshReason reason)
   // do it async, to not risk the emulated controllers default config loading not finding a default
   // device.
 
+  // An empty mouse class for when no platform specific one exists.
+  prime::g_mouse_input.reset(new prime::NullMouse());
+
   for (auto& backend : m_input_backends)
     backend->PopulateDevices();
+
+  prime::InitializeHack();
 
   WiimoteReal::PopulateDevices();
 

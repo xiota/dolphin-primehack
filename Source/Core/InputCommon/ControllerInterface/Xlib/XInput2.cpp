@@ -17,6 +17,9 @@
 
 #include "Core/Host.h"
 
+#include "InputCommon/ControllerInterface/Xlib/XInput2.h"
+#include "InputCommon/XInput2Mouse.h"
+
 // This is an input plugin using the XInput 2.0 extension to the X11 protocol,
 // loosely based on the old XLib plugin. (Has nothing to do with the XInput
 // API on Windows.)
@@ -97,6 +100,8 @@ void InputBackend::PopulateDevices()
     return;
 
   const auto hwnd = wsi.render_window;
+
+  prime::InitXInput2Mouse(hwnd);
 
   Display* dpy = XOpenDisplay(nullptr);
 
