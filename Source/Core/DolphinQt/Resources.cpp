@@ -95,7 +95,7 @@ void Resources::Init()
   }
 
   m_misc.append(GetResourceIcon("nobanner"));
-  m_misc.append(GetResourceIcon("dolphin_logo"));
+  m_misc.append(GetResourceIcon("primehack_logo"));
 }
 
 QIcon Resources::GetPlatform(DiscIO::Platform platform)

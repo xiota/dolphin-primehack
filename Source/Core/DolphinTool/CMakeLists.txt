@@ -1,4 +1,4 @@
-add_executable(dolphin-tool
+add_executable(primehack-tool
   ToolHeadlessPlatform.cpp
   ExtractCommand.cpp
   ExtractCommand.h
@@ -12,15 +12,15 @@ add_executable(dolphin-tool
 )
 
 if (WIN32)
-  target_sources(dolphin-tool PRIVATE DolphinTool.exe.manifest DolphinTool.rc)
+  target_sources(primehack-tool PRIVATE DolphinTool.exe.manifest DolphinTool.rc)
 
-  set_target_properties(dolphin-tool PROPERTIES
+  set_target_properties(primehack-tool PROPERTIES
     DEBUG_POSTFIX    D
-    OUTPUT_NAME      DolphinTool
+    OUTPUT_NAME      PrimeHackTool
   )
 endif()
 
-target_link_libraries(dolphin-tool
+target_link_libraries(primehack-tool
 PRIVATE
   discio
   uicommon
@@ -30,8 +30,8 @@ PRIVATE
 
 if(MSVC)
   # Add precompiled header
-  target_link_libraries(dolphin-tool PRIVATE use_pch)
+  target_link_libraries(primehack-tool PRIVATE use_pch)
 endif()
 
-set(CPACK_PACKAGE_EXECUTABLES ${CPACK_PACKAGE_EXECUTABLES} dolphin-tool)
-install(TARGETS dolphin-tool RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+set(CPACK_PACKAGE_EXECUTABLES ${CPACK_PACKAGE_EXECUTABLES} primehack-tool)
+install(TARGETS primehack-tool RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

@@ -12,13 +12,13 @@
 
 // The normal user directory
 #ifdef _WIN32
-#define NORMAL_USER_DIR "Dolphin Emulator"
+#define NORMAL_USER_DIR "PrimeHack Emulator"
 #elif defined(__APPLE__)
-#define NORMAL_USER_DIR "Library/Application Support/Dolphin"
+#define NORMAL_USER_DIR "Library/Application Support/PrimeHack"
 #elif defined(ANDROID)
-#define NORMAL_USER_DIR "/sdcard/dolphin-emu"
+#define NORMAL_USER_DIR "/sdcard/primehack"
 #else
-#define NORMAL_USER_DIR "dolphin-emu"
+#define NORMAL_USER_DIR "primehack"
 #endif
 
 // The portable user directory
@@ -112,7 +112,7 @@
 #define RETROACHIEVEMENTS_CONFIG "RetroAchievements.ini"
 
 // Files in the directory returned by GetUserPath(D_LOGS_IDX)
-#define MAIN_LOG "dolphin.log"
+#define MAIN_LOG "PrimeHack.log"
 
 // Files in the directory returned by GetUserPath(D_WIISYSCONF_IDX)
 #define WII_SYSCONF "SYSCONF"

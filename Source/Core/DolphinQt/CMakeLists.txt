@@ -21,7 +21,7 @@ message(STATUS "Found Qt version ${Qt6_VERSION}")
 
 set_property(TARGET Qt6::Core PROPERTY INTERFACE_COMPILE_FEATURES "")
 
-add_executable(dolphin-emu
+add_executable(primehack
   AboutDialog.cpp
   AboutDialog.h
   CheatSearchFactoryWidget.cpp
@@ -423,19 +423,19 @@ add_executable(dolphin-emu
 )
 
 if (WIN32)
-  target_sources(dolphin-emu PRIVATE
+  target_sources(primehack PRIVATE
     Styles/Dark/dark.qrc
   )
 endif()
 
 if (NOT WIN32)
-  target_sources(dolphin-emu PRIVATE
+  target_sources(primehack PRIVATE
     QtUtils/SignalDaemon.cpp
     QtUtils/SignalDaemon.h
   )
 endif()
 
-target_compile_definitions(dolphin-emu
+target_compile_definitions(primehack
 PRIVATE
   -DQT_USE_QSTRINGBUILDER
   -DQT_NO_CAST_FROM_ASCII
@@ -445,13 +445,13 @@ PRIVATE
   -DQT_WARN_DEPRECATED_UP_TO=0x060501
 )
 
-target_include_directories(dolphin-emu
+target_include_directories(primehack
 PRIVATE
   ${CMAKE_CURRENT_BINARY_DIR}
   ${Qt6Gui_PRIVATE_INCLUDE_DIRS}
 )
 
-target_link_libraries(dolphin-emu
+target_link_libraries(primehack
 PRIVATE
   core
   Qt6::Widgets
@@ -461,14 +461,14 @@ PRIVATE
 )
 
 if (NEED_QT_GUI_PRIVATE_COMPONENT)
-  target_link_libraries(dolphin-emu
+  target_link_libraries(primehack
   PRIVATE
     Qt6::GuiPrivate
   )
 endif()
 
 if (WIN32)
-  target_link_libraries(dolphin-emu
+  target_link_libraries(primehack
   PRIVATE
     gdi32.lib
     shell32.lib
@@ -483,51 +483,51 @@ if (MSVC)
   list(TRANSFORM Qt6Gui_INCLUDE_DIRS PREPEND "/external:I" OUTPUT_VARIABLE qtGui)
   list(TRANSFORM Qt6Gui_PRIVATE_INCLUDE_DIRS PREPEND "/external:I" OUTPUT_VARIABLE qtGuiPriv)
   list(TRANSFORM Qt6Widgets_PRIVATE_INCLUDE_DIRS PREPEND "/external:I" OUTPUT_VARIABLE qtWidgetsPriv)
-  target_compile_options(dolphin-emu PRIVATE "${qtGui}")
-  target_compile_options(dolphin-emu PRIVATE "${qtGuiPriv}")
-  target_compile_options(dolphin-emu PRIVATE "${qtWidgets}")
+  target_compile_options(primehack PRIVATE "${qtGui}")
+  target_compile_options(primehack PRIVATE "${qtGuiPriv}")
+  target_compile_options(primehack PRIVATE "${qtWidgets}")
 
   # Qt 6.3.0 headers use std::aligned_storage instead of alignas
-  target_compile_definitions(dolphin-emu PRIVATE _SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING)
+  target_compile_definitions(primehack PRIVATE _SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING)
 
   # Qt6 requires RTTI
-  remove_cxx_flag_from_target(dolphin-emu "/GR-")
-  target_compile_options(dolphin-emu PRIVATE "/GR")
+  remove_cxx_flag_from_target(primehack "/GR-")
+  target_compile_options(primehack PRIVATE "/GR")
 endif()
 
 if(WIN32)
-  target_sources(dolphin-emu PRIVATE DolphinQt.manifest DolphinQt.rc)
+  target_sources(primehack PRIVATE DolphinQt.manifest DolphinQt.rc)
 
-  set_target_properties(dolphin-emu PROPERTIES
+  set_target_properties(primehack PROPERTIES
     DEBUG_POSTFIX    D
     OUTPUT_NAME      Dolphin
     WIN32_EXECUTABLE TRUE
   )
 
   # Copy Sys dir
-  add_custom_command(TARGET dolphin-emu POST_BUILD
+  add_custom_command(TARGET primehack POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Sys"
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/Data/Sys" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Sys"
   )
 
   # Copy COPYING
-  add_custom_command(TARGET dolphin-emu POST_BUILD
+  add_custom_command(TARGET primehack POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/COPYING" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/COPYING"
   )
 
   # Copy Licenses dir
-  add_custom_command(TARGET dolphin-emu POST_BUILD
+  add_custom_command(TARGET primehack POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/LICENSES" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Licenses"
   )
 
   # Copy qt.conf
-  add_custom_command(TARGET dolphin-emu POST_BUILD
+  add_custom_command(TARGET primehack POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/qt.conf.win" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qt.conf"
   )
 
   if (ENABLE_AUTOUPDATE)
     # Copy build_info.txt
-    add_custom_command(TARGET dolphin-emu POST_BUILD
+    add_custom_command(TARGET primehack POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_BINARY_DIR}/build_info.txt" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/build_info.txt"
     )
   endif()
@@ -551,7 +551,7 @@ if(WIN32)
   #       means proper path variables will not be set up, thus the need to ensure they're
   #       always set up.
   #
-  add_custom_command(TARGET dolphin-emu POST_BUILD
+  add_custom_command(TARGET primehack POST_BUILD
     COMMAND "${CMAKE_COMMAND}" -E env PATH="${QT_BINARY_DIRECTORY}"
             "${WINDEPLOYQT_EXE}" --libdir="${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
                                  --plugindir="${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/QtPlugins"
@@ -560,7 +560,7 @@ if(WIN32)
                                  --no-compiler-runtime
                                  --no-system-d3d-compiler
                                  --no-opengl-sw
-                                 "$<TARGET_FILE:dolphin-emu>"
+                                 "$<TARGET_FILE:primehack>"
   )
 endif()
 
@@ -576,7 +576,7 @@ if(GETTEXT_MSGFMT_EXECUTABLE)
   set(pot_file "${CMAKE_SOURCE_DIR}/Languages/po/dolphin-emu.pot")
   file(GLOB LINGUAS ${CMAKE_SOURCE_DIR}/Languages/po/*.po)
 
-  target_sources(dolphin-emu PRIVATE ${pot_file} ${LINGUAS})
+  target_sources(primehack PRIVATE ${pot_file} ${LINGUAS})
   source_group("Localization" FILES ${LINGUAS})
   source_group("Localization\\\\Generated" FILES ${pot_file})
 
@@ -587,10 +587,10 @@ if(GETTEXT_MSGFMT_EXECUTABLE)
       set(mo ${mo_dir}/${lang}.mo)
     else()
       set(mo_dir ${CMAKE_CURRENT_BINARY_DIR}/${lang})
-      set(mo ${mo_dir}/dolphin-emu.mo)
+      set(mo ${mo_dir}/primehack.mo)
     endif()
 
-    target_sources(dolphin-emu PRIVATE ${mo})
+    target_sources(primehack PRIVATE ${mo})
     source_group("Localization\\\\Generated" FILES ${mo})
 
     if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
@@ -620,7 +620,7 @@ if(APPLE)
   include(BundleUtilities)
 
   # Ask for an application bundle.
-  set_target_properties(dolphin-emu PROPERTIES
+  set_target_properties(primehack PROPERTIES
     MACOSX_BUNDLE true
     MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in"
     XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ""
@@ -628,11 +628,11 @@ if(APPLE)
     )
 
   # Copy qt.conf into the bundle
-  target_sources(dolphin-emu PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/qt.conf")
+  target_sources(primehack PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/qt.conf")
   set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/qt.conf" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
   # Copy icon into the bundle
-  target_sources(dolphin-emu PRIVATE "${CMAKE_SOURCE_DIR}/Data/Dolphin.icns")
+  target_sources(primehack PRIVATE "${CMAKE_SOURCE_DIR}/Data/Dolphin.icns")
   set_source_files_properties("${CMAKE_SOURCE_DIR}/Data/Dolphin.icns" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
   # Manually include plugins
@@ -641,18 +641,18 @@ if(APPLE)
 
   # Copy Qt plugins into the bundle
   get_target_property(qtcocoa_location Qt6::QCocoaIntegrationPlugin LOCATION)
-  target_sources(dolphin-emu PRIVATE "${qtcocoa_location}")
+  target_sources(primehack PRIVATE "${qtcocoa_location}")
   set_source_files_properties("${qtcocoa_location}" PROPERTIES MACOSX_PACKAGE_LOCATION MacOS/platforms)
 
   get_target_property(qtmacstyle_location Qt6::QMacStylePlugin LOCATION)
-  target_sources(dolphin-emu PRIVATE "${qtmacstyle_location}")
+  target_sources(primehack PRIVATE "${qtmacstyle_location}")
   set_source_files_properties("${qtmacstyle_location}" PROPERTIES MACOSX_PACKAGE_LOCATION MacOS/styles)
 
   # Copy resources into the bundle
   set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/Data/Sys")
   file(GLOB_RECURSE resources RELATIVE "${CMAKE_SOURCE_DIR}/Data" "${CMAKE_SOURCE_DIR}/Data/Sys/*")
   foreach(res ${resources})
-    target_sources(dolphin-emu PRIVATE "${CMAKE_SOURCE_DIR}/Data/${res}")
+    target_sources(primehack PRIVATE "${CMAKE_SOURCE_DIR}/Data/${res}")
     get_filename_component(resdir "${res}" DIRECTORY)
     set_source_files_properties("${CMAKE_SOURCE_DIR}/Data/${res}" PROPERTIES
       MACOSX_PACKAGE_LOCATION "Resources/${resdir}")
@@ -660,21 +660,21 @@ if(APPLE)
   endforeach()
 
   include(DolphinInjectVersionInfo)
-  dolphin_inject_version_info(dolphin-emu)
+  dolphin_inject_version_info(primehack)
 
   # Copy MoltenVK into the bundle
   if(ENABLE_VULKAN)
     if(USE_BUNDLED_MOLTENVK)
-      add_dependencies(dolphin-emu MoltenVK)
+      add_dependencies(primehack MoltenVK)
       ExternalProject_Get_Property(MoltenVK SOURCE_DIR)
-      target_sources(dolphin-emu PRIVATE "${SOURCE_DIR}/Package/Release/MoltenVK/dynamic/dylib/macOS/libMoltenVK.dylib")
+      target_sources(primehack PRIVATE "${SOURCE_DIR}/Package/Release/MoltenVK/dynamic/dylib/macOS/libMoltenVK.dylib")
       set_source_files_properties("${SOURCE_DIR}/Package/Release/MoltenVK/dynamic/dylib/macOS/libMoltenVK.dylib" PROPERTIES MACOSX_PACKAGE_LOCATION Frameworks GENERATED ON)
     else()
       find_file(MOLTENVK_DYLIB NAMES libMoltenVK.dylib PATH_SUFFIXES lib)
       if(NOT MOLTENVK_DYLIB)
         message(FATAL_ERROR "Couldn't find libMoltenVK.dylib.  Enable USE_BUNDLED_MOLTENVK?")
       endif()
-      target_sources(dolphin-emu PRIVATE ${MOLTENVK_DYLIB})
+      target_sources(primehack PRIVATE ${MOLTENVK_DYLIB})
       set_source_files_properties(${MOLTENVK_DYLIB} PROPERTIES MACOSX_PACKAGE_LOCATION Frameworks)
     endif()
   endif()
@@ -682,29 +682,29 @@ if(APPLE)
   if(POSTPROCESS_BUNDLE)
     # Update library references to make the bundle portable
     include(DolphinPostprocessBundle)
-    dolphin_postprocess_bundle(dolphin-emu)
+    dolphin_postprocess_bundle(primehack)
     # Fix rpath
-    add_custom_command(TARGET dolphin-emu
+    add_custom_command(TARGET primehack
       POST_BUILD COMMAND
       ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "@executable_path/../Frameworks/"
-      $<TARGET_FILE:dolphin-emu>)
+      $<TARGET_FILE:primehack>)
   endif()
 
   if(MACOS_CODE_SIGNING)
-    add_custom_command(TARGET dolphin-emu
+    add_custom_command(TARGET primehack
       POST_BUILD
       COMMAND "${CMAKE_SOURCE_DIR}/Tools/mac-codesign.sh"
       "-e" "${CMAKE_CURRENT_SOURCE_DIR}/DolphinEmu$<$<CONFIG:Debug>:Debug>.entitlements"
       "${MACOS_CODE_SIGNING_IDENTITY}"
-      "$<TARGET_BUNDLE_DIR:dolphin-emu>"
+      "$<TARGET_BUNDLE_DIR:primehack>"
     )
   endif()
 else()
-  install(TARGETS dolphin-emu RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  install(TARGETS primehack RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
 
 if(USE_MGBA)
-  target_sources(dolphin-emu PRIVATE
+  target_sources(primehack PRIVATE
     GBAHost.cpp
     GBAHost.h
     GBAWidget.cpp
@@ -713,13 +713,13 @@ if(USE_MGBA)
 endif()
 
 if(USE_DISCORD_PRESENCE)
-  target_compile_definitions(dolphin-emu PRIVATE -DUSE_DISCORD_PRESENCE)
+  target_compile_definitions(primehack PRIVATE -DUSE_DISCORD_PRESENCE)
 endif()
 
 if(USE_RETRO_ACHIEVEMENTS)
-  target_link_libraries(dolphin-emu PRIVATE rcheevos)
-  target_compile_definitions(dolphin-emu PRIVATE -DUSE_RETRO_ACHIEVEMENTS)
+  target_link_libraries(primehack PRIVATE rcheevos)
+  target_compile_definitions(primehack PRIVATE -DUSE_RETRO_ACHIEVEMENTS)
   if(RC_CLIENT_SUPPORTS_RAINTEGRATION)
-    target_compile_definitions(dolphin-emu PRIVATE -DRC_CLIENT_SUPPORTS_RAINTEGRATION)
+    target_compile_definitions(primehack PRIVATE -DRC_CLIENT_SUPPORTS_RAINTEGRATION)
   endif()
 endif()

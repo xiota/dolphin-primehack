@@ -20,7 +20,7 @@
 
 static void PrintUsage()
 {
-  fmt::print(std::cerr, "usage: dolphin-tool COMMAND -h\n"
+  fmt::print(std::cerr, "usage: primehack-tool COMMAND -h\n"
                         "\n"
                         "commands supported: [convert, verify, header, extract]\n");
 }

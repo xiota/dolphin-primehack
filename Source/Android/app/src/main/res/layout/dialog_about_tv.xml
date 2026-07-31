@@ -24,7 +24,7 @@
                 android:paddingHorizontal="24dp">
 
                 <ImageView
-                    android:id="@+id/dolphin_logo"
+                    android:id="@+id/primehack_logo"
                     android:layout_width="132dp"
                     android:layout_height="132dp"
                     android:layout_gravity="center_horizontal"

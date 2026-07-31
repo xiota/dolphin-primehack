@@ -22,7 +22,7 @@
                 android:layout_height="match_parent">
 
                 <ImageView
-                    android:id="@+id/dolphin_logo"
+                    android:id="@+id/primehack_logo"
                     android:layout_width="192dp"
                     android:layout_height="192dp"
                     android:layout_marginStart="@dimen/spacing_xtralarge"
@@ -42,7 +42,7 @@
                     android:paddingBottom="@dimen/spacing_large"
                     android:orientation="vertical"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toEndOf="@+id/dolphin_logo"
+                    app:layout_constraintStart_toEndOf="@+id/primehack_logo"
                     app:layout_constraintTop_toTopOf="parent">
 
                     <TextView
