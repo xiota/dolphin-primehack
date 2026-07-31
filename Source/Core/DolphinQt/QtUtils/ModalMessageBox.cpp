@@ -46,10 +46,8 @@ static inline int ExecPrimeHackMessage(QWidget* parent)
     "<p>PrimeHack has detected it is being ran for the first time:"
     "</p><p>"
     "It is strongly recommended to click the <b>Default</b> button for whichever input method is being used to ensure the intended defaults are loaded.\nIt is not required, but be advised any existing settings <i>may</i> cause conflicts."
-    "</p><p>"
-    "If you have any further questions, please see our <a href='https://github.com/shiiion/dolphin/wiki'>wiki</a> or visit our <a href='https://discord.gg/Gc2HcPH'>Discord</a>.</p>"));
+    "</p>"));
   msg.setStandardButtons(QMessageBox::Ok);
-  msg.addButton(QMessageBox::Help);
   msg.setDefaultButton(QMessageBox::NoButton);
 
   return msg.exec();
@@ -94,9 +92,7 @@ static inline int ExecPrimeHackGCTabMessage(QWidget* parent)
 
 void ModalMessageBox::primehack_initialrun(QWidget* parent)
 {
-  if (ExecPrimeHackMessage(parent) == QMessageBox::Help) {
-    QDesktopServices::openUrl(QUrl(QString::fromStdString("https://github.com/shiiion/dolphin/wiki/Installation")));
-  }
+  ExecPrimeHackMessage(parent);
 }
 
 bool ModalMessageBox::primehack_wiitab(QWidget* parent)

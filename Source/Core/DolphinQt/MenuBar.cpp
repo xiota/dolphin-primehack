@@ -674,23 +674,6 @@ void MenuBar::AddHelpMenu()
 {
   QMenu* help_menu = addMenu(tr("&Help"));
 
-  QAction* website = help_menu->addAction(tr("&Website"));
-  connect(website, &QAction::triggered, this,
-          [] { QDesktopServices::openUrl(QUrl(QStringLiteral("https://dolphin-emu.org/"))); });
-  QAction* documentation = help_menu->addAction(tr("Online &Documentation"));
-  connect(documentation, &QAction::triggered, this, [] {
-    QDesktopServices::openUrl(QUrl(QStringLiteral("https://dolphin-emu.org/docs/guides")));
-  });
-  QAction* github = help_menu->addAction(tr("&GitHub Repository"));
-  connect(github, &QAction::triggered, this, [] {
-    QDesktopServices::openUrl(QUrl(QStringLiteral("https://github.com/dolphin-emu/dolphin")));
-  });
-  QAction* bugtracker = help_menu->addAction(tr("&Bug Tracker"));
-  connect(bugtracker, &QAction::triggered, this, [] {
-    QDesktopServices::openUrl(
-        QUrl(QStringLiteral("https://bugs.dolphin-emu.org/projects/emulator")));
-  });
-
   if (AutoUpdateChecker::SystemSupportsAutoUpdates())
   {
     help_menu->addSeparator();
@@ -795,14 +778,6 @@ void MenuBar::AddPrimeHackMenu()
   RebuildPrimeModMenus();
 
   primehack_menu->addSeparator();
-
-  QMenu* help_menu = primehack_menu->addMenu(tr("Help"));
-  help_menu->addAction(tr("&Wiki"), [] {
-    QDesktopServices::openUrl(QUrl(QStringLiteral("https://github.com/shiiion/dolphin/wiki")));
-  });
-  help_menu->addAction(tr("&Discord"), [] {
-    QDesktopServices::openUrl(QUrl(QStringLiteral("https://discord.gg/ZbeKZxDb6W")));
-  });
 
   connect(&Settings::Instance(), &Settings::EmulationStateChanged, this, [this](Core::State state) {
 #ifdef USE_RETRO_ACHIEVEMENTS

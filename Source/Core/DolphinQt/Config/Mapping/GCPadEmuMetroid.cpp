@@ -62,21 +62,6 @@ void GCPadEmuMetroid::CreateMainLayout()
   gamecube_options->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   groupbox0->addWidget(gamecube_options, 1);
 
-  QGroupBox* help_box = new QGroupBox(tr("Help"));
-  const auto help_hbox = new QHBoxLayout;
-
-  m_help_button = new QPushButton();
-  m_help_button->setText(tr("Open Wiki Page"));
-  connect(m_help_button, &QPushButton::clicked, this, []() {
-    QDesktopServices::openUrl(QUrl(QStringLiteral("https://github.com/shiiion/dolphin/wiki/Installation#changing-primehack-settings")));
-    });
-
-  help_hbox->addWidget(m_help_button);
-  help_box->setLayout(help_hbox);
-
-  help_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  groupbox0->addWidget(help_box);
-
   // Column 1
 
   auto* groupbox1 = new QVBoxLayout();
