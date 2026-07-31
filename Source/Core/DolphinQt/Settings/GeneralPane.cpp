@@ -404,7 +404,7 @@ void GeneralPane::AddDescriptions()
       QT_TR_NOOP("Shows which game is active and the duration of your current play session in your "
                  "Discord status."
                  "<br><br>This setting cannot be changed while emulation is active."
-                 "<br><br><dolphin_emphasis>If unsure, leave this checked.</dolphin_emphasis>");
+                 "<br><br><dolphin_emphasis>If unsure, leave this unchecked.</dolphin_emphasis>");
 #endif
   static constexpr char TR_UPDATE_TRACK_DESCRIPTION[] = QT_TR_NOOP(
       "Selects which update track Dolphin uses when checking for updates at startup. If a new "
