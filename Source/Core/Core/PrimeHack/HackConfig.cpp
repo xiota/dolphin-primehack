@@ -37,7 +37,7 @@ CameraLock lock_camera = CameraLock::Unlocked;
 bool reticle_lock = false;
 bool new_map_controls = false;
 
-std::string trilogy_motd = "Thanks for using PrimeHack!\nPlease see our wiki for help!";
+std::string trilogy_motd = "Thank you for using PrimeHack!";
 std::mutex motd_lock;
 
 } // namespace

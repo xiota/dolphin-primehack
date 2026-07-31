@@ -291,34 +291,6 @@ int main(int argc, char* argv[])
       Config::SetBase(Config::PRIMEHACK_INITIAL_RUN, true);
     }
 
-    std::thread([] {
-      Common::HttpRequest motd_req;
-      auto get_resp = motd_req.Get("https://gist.githubusercontent.com/shiiion/366c2421f650d456ddfb3803c06b49fd/raw/");
-      if (get_resp) {
-        prime::SetMotd(std::string(get_resp->begin(), get_resp->end()));
-      }
-    }).detach();
-
-#if defined(USE_ANALYTICS) && USE_ANALYTICS
-    if (!Config::Get(Config::MAIN_ANALYTICS_PERMISSION_ASKED))
-    {
-      // To ensure that the analytics prompt appears aligned with the center of the main window,
-      // the dialog is only shown after the application is ready, as only then it is guaranteed that
-      // the main window has been placed in its final position.
-      auto* const connection_context = new QObject(&win);
-      QObject::connect(qApp, &QGuiApplication::applicationStateChanged, connection_context,
-                       [connection_context, &win](const Qt::ApplicationState state) {
-                         if (state != Qt::ApplicationState::ApplicationActive)
-                           return;
-
-                         // Severe the connection after the first run.
-                         delete connection_context;
-
-                         ShowAnalyticsPrompt(&win);
-                       });
-    }
-#endif
-
     if (!Settings::Instance().IsBatchModeEnabled())
     {
       auto* updater = new Updater(&win, Config::Get(Config::MAIN_AUTOUPDATE_UPDATE_TRACK),
