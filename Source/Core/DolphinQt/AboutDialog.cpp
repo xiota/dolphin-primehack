@@ -14,7 +14,7 @@
 
 AboutDialog::AboutDialog(QWidget* parent) : QDialog(parent)
 {
-  setWindowTitle(tr("About Dolphin"));
+  setWindowTitle(tr("About PrimeHack"));
 
   QString branch_str = QString::fromStdString(Common::GetScmBranchStr());
   const int commits_ahead = Common::GetScmCommitsAheadMaster();
@@ -28,18 +28,14 @@ AboutDialog::AboutDialog(QWidget* parent) : QDialog(parent)
 
   const QString text =
       QStringLiteral(R"(
-<p style='font-size:38pt; font-weight:400;'>Dolphin</p>
+<p style='font-size:38pt; font-weight:400;'>PrimeHack</p>
 
-<p style='font-size:18pt;'>%VERSION_STRING%</p>
+<p style='font-size:18pt;'>Dolphin %VERSION_STRING%</p>
 
 <p style='font-size: small;'>
 %BRANCH%<br>
 %REVISION%<br><br>
 %QT_VERSION%
-</p>
-
-<p>
-%CHECK_FOR_UPDATES%: <a href='https://dolphin-emu.org/download'>dolphin-emu.org/download</a>
 </p>
 
 <p>
@@ -52,8 +48,7 @@ AboutDialog::AboutDialog(QWidget* parent) : QDialog(parent)
 
 <p>
 <a href='https://github.com/dolphin-emu/dolphin/blob/master/COPYING'>%LICENSE%</a> |
-<a href='https://github.com/dolphin-emu/dolphin/graphs/contributors'>%AUTHORS%</a> |
-<a href='https://forums.dolphin-emu.org/'>%SUPPORT%</a>
+<a href='https://github.com/dolphin-emu/dolphin/graphs/contributors'>%AUTHORS%</a>
 )")
           .replace(QStringLiteral("%VERSION_STRING%"),
                    QString::fromUtf8(Common::GetScmDescStr().c_str()))
@@ -88,8 +83,8 @@ AboutDialog::AboutDialog(QWidget* parent) : QDialog(parent)
               // in your translation, please use the type of curly quotes that's appropriate for
               // your language. If you aren't sure which type is appropriate, see
               // https://en.wikipedia.org/wiki/Quotation_mark#Specific_language_features
-              tr("\u00A9 2003-2024+ Dolphin Team. \u201cGameCube\u201d and \u201cWii\u201d are "
-                 "trademarks of Nintendo. Dolphin is not affiliated with Nintendo in any way.")));
+              tr("\u00A9 2003-2024+ PrimeHack Team. \u201cGameCube\u201d and \u201cWii\u201d are "
+                 "trademarks of Nintendo. Dolphin and PrimeHack are not affiliated with Nintendo in any way.")));
 
   QLabel* logo = new QLabel();
   logo->setPixmap(Resources::GetAppIcon().pixmap(200, 200));
